@@ -1,0 +1,30 @@
+# Gera o Finance Control.app/.dmg na nuvem (runner macOS da GitHub), sem usar o Terminal do seu Mac.
+# Use: Actions > "Build macOS app" > Run workflow. Baixe o arquivo em "Artifacts".
+name: Build macOS app
+on: workflow_dispatch
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-15-intel   # Macs com processador Intel
+            suffix: intel
+          - os: macos-latest     # Macs com Apple Silicon (M1+)
+            suffix: apple-silicon
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -t .
+      - run: python -m pip install -r requirements-build.txt
+      - run: pyinstaller --noconfirm --clean packaging/FinanceControl.spec
+      - run: codesign --force --deep --sign - "dist/Finance Control.app"
+      - run: |
+          mkdir stage && cp -R "dist/Finance Control.app" stage/ && ln -s /Applications stage/Applications
+          hdiutil create -volname "Finance Control" -srcfolder stage -ov -format UDZO FinanceControl-${{ matrix.suffix }}.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FinanceControl-${{ matrix.suffix }}
+          path: FinanceControl-${{ matrix.suffix }}.dmg

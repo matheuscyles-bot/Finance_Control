@@ -1,0 +1,2 @@
+# Dependências de execução do app.
+pillow
