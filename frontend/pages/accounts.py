@@ -10,10 +10,11 @@ from frontend.theme import c, font
 from frontend.widgets import Button, Card, EmptyState, ScrollFrame, SortableTree, label
 from backend.utils import formatters
 from backend.utils.formatters import money
+from backend.utils.i18n import category_label, t
 
 
 class AccountsPage(Page):
-    title = "Contas"
+    title_key = "nav.accounts"
 
     def build(self):
         self.show_archived = tk.BooleanVar(value=False)
@@ -24,8 +25,8 @@ class AccountsPage(Page):
 
     def header_actions(self, parent):
         return [
-            Button(parent, "Nova transferência", self.new_transfer, "secondary", icon="transfer"),
-            Button(parent, "Nova conta", self.new_account, "primary", icon="plus"),
+            Button(parent, t("common.new_transfer"), self.new_transfer, "secondary", icon="transfer"),
+            Button(parent, t("common.new_account"), self.new_account, "primary", icon="plus"),
         ]
 
     def refresh(self):
@@ -36,9 +37,9 @@ class AccountsPage(Page):
         total = accounts.total_balance()
         head = tk.Frame(self.content, bg=c("bg"))
         head.pack(fill="x", pady=(0, 12))
-        label(head, "Saldo total das contas ativas", 11, color="muted", bg="bg").pack(side="left")
+        label(head, t("common.active_accounts_balance"), 11, color="muted", bg="bg").pack(side="left")
         label(head, "  " + money(total), 16, "bold", "text" if total >= 0 else "expense", bg="bg").pack(side="left")
-        tk.Checkbutton(head, text="Mostrar contas arquivadas", variable=self.show_archived,
+        tk.Checkbutton(head, text=t("common.show_archived"), variable=self.show_archived,
                        command=self.refresh, bg=c("bg"), fg=c("muted"), selectcolor=c("surface"),
                        activebackground=c("bg"), font=font(10)).pack(side="right")
 
@@ -53,13 +54,13 @@ class AccountsPage(Page):
             top.pack(fill="x")
             label(top, a["name"], 13, "bold").pack(side="left")
             if a["archived"]:
-                label(top, "Arquivada", 9, color="muted", anchor="e").pack(side="right")
+                label(top, t("common.archived"), 9, color="muted", anchor="e").pack(side="right")
             label(card.body, config.ACCOUNT_TYPES.get(a["type"], ""), 10, color="muted").pack(fill="x")
             label(card.body, money(a["balance"]), 22, "bold",
                   "text" if a["balance"] >= 0 else "expense").pack(fill="x", pady=(10, 0))
-            note = "Saldo atual"
+            note = t("common.current_balance")
             if a["projected_balance"] != a["balance"]:
-                note = f"Previsto com lançamentos futuros: {money(a['projected_balance'])}"
+                note = t("common.projected_balance", amount=money(a["projected_balance"]))
             label(card.body, note, 10, color="muted").pack(fill="x")
             actions = tk.Frame(card.body, bg=c("surface"))
             actions.pack(fill="x", pady=(12, 0))
@@ -77,21 +78,25 @@ class AccountsPage(Page):
         card.pack(fill="x", pady=(18, 0))
         top = tk.Frame(card.body, bg=c("surface"))
         top.pack(fill="x", padx=18, pady=(14, 8))
-        label(top, "Transferências entre contas", 13, "bold").pack(side="left")
-        label(top, "Não contam como receita nem despesa", 10, color="muted", anchor="e").pack(side="right")
+        label(top, t("common.transfer_section"), 13, "bold").pack(side="left")
+        label(top, t("common.transfer_neutral"), 10, color="muted", anchor="e").pack(side="right")
         transfers = accounts.list_transfers(limit=100)
         if not transfers:
-            label(card.body, "Nenhuma transferência ainda. Use “Nova transferência” para mover dinheiro entre contas.",
+            label(card.body, t("common.no_transfer"),
                   11, color="muted").pack(fill="x", padx=18, pady=(4, 20))
             return
-        columns = [("date", "Data", 100, "w", False), ("from", "De", 180, "w", False),
-                   ("to", "Para", 180, "w", False), ("notes", "Observações", 240, "w", False),
-                   ("amount", "Valor", 120, "e", False)]
+        columns = [("date", t("common.date"), 100, "w", False), ("from", t("common.from"), 180, "w", False),
+                   ("to", t("common.to"), 180, "w", False), ("notes", t("common.notes_optional"), 240, "w", False),
+                   ("amount", t("common.amount"), 120, "e", False)]
         self.table = SortableTree(card.body, columns, None, self.edit_transfer, height=min(len(transfers), 8))
         self.table.pack(fill="x")
-        for t in transfers:
-            self.table.add(t["id"], (formatters.format_date(t["transfer_date"]), t["from_name"],
-                                     t["to_name"], t["notes"] or "", money(t["amount"])))
+        for transfer_row in transfers:
+            self.table.add(
+                transfer_row["id"],
+                (formatters.format_date(transfer_row["transfer_date"]),
+                 transfer_row["from_name"], transfer_row["to_name"],
+                 transfer_row["notes"] or "", money(transfer_row["amount"])),
+            )
         foot = tk.Frame(card.body, bg=c("surface"))
         foot.pack(fill="x", padx=18, pady=10)
         Button(foot, "Excluir", self.delete_transfer, "secondary", pad=(12, 5)).pack(side="right")

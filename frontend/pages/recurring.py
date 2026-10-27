@@ -10,39 +10,39 @@ from frontend.theme import c, font
 from frontend.widgets import Button, Card, EmptyState, SortableTree, label
 from backend.utils import formatters
 from backend.utils.formatters import money
+from backend.utils.i18n import category_label, t
 
 
 class RecurringPage(Page):
-    title = "Recorrências"
+    title_key = "nav.recurring"
 
     def build(self):
         self.card = Card(self, 0, 0)
         self.card.pack(fill="both", expand=True, padx=32, pady=(0, 28))
         self.tree = SortableTree(self.card.body, [
-            ("next", "Próxima data", 110, "w", False),
-            ("description", "Descrição", 260, "w", False),
-            ("category", "Categoria", 150, "w", False),
-            ("account", "Conta", 140, "w", False),
-            ("frequency", "Frequência", 100, "w", False),
-            ("amount", "Valor", 120, "e", False),
-            ("status", "Situação", 90, "w", False),
+            ("next", t("recurring.next_date"), 110, "w", False),
+            ("description", t("common.description"), 260, "w", False),
+            ("category", t("common.category"), 150, "w", False),
+            ("account", t("common.account"), 140, "w", False),
+            ("frequency", t("recurring.frequency"), 100, "w", False),
+            ("amount", t("common.amount"), 120, "e", False),
+            ("status", t("recurring.status"), 90, "w", False),
         ], on_open=self.edit, height=14)
-        self.empty = EmptyState(self.card.body, "repeat", "Nenhuma recorrência",
-                                "Cadastre o aluguel, assinaturas ou salário uma única vez e o app "
-                                "cria os lançamentos nas datas certas.",
-                                "Nova recorrência", self.new)
+        self.empty = EmptyState(self.card.body, "repeat", t("recurring.none_title"),
+                                t("recurring.none_text"),
+                                t("common.new_recurring"), self.new)
         foot = tk.Frame(self.card.body, bg=c("surface"))
         self.foot = foot
-        self.pause_btn = Button(foot, "Pausar", self.toggle, "secondary", pad=(12, 5))
+        self.pause_btn = Button(foot, t("recurring.pause"), self.toggle, "secondary", pad=(12, 5))
         self.pause_btn.pack(side="right", padx=(8, 0))
-        Button(foot, "Excluir", self.delete, "secondary", pad=(12, 5)).pack(side="right", padx=(8, 0))
-        Button(foot, "Editar", self.edit, "secondary", pad=(12, 5)).pack(side="right")
-        label(foot, "Os lançamentos vencidos são criados ao abrir o app.", 10, color="muted").pack(side="left")
+        Button(foot, t("common.delete"), self.delete, "secondary", pad=(12, 5)).pack(side="right", padx=(8, 0))
+        Button(foot, t("common.edit"), self.edit, "secondary", pad=(12, 5)).pack(side="right")
+        label(foot, t("recurring.due_hint"), 10, color="muted").pack(side="left")
         self.tree.tree.bind("<<TreeviewSelect>>", lambda e: self._sync_button())
         self.rows = {}
 
     def header_actions(self, parent):
-        return [Button(parent, "Nova recorrência", self.new, "primary", icon="plus")]
+        return [Button(parent, t("common.new_recurring"), self.new, "primary", icon="plus")]
 
     def refresh(self):
         super().refresh()
@@ -61,24 +61,25 @@ class RecurringPage(Page):
             income = r["kind"] == "income"
             self.tree.add(r["id"], (
                 formatters.format_date(r["next_date"]), r["description"],
-                r["category_name"] or "Sem categoria", r["account_name"],
+                category_label(r["category_name"]) if r["category_name"] else t("common.no_category"),
+                r["account_name"],
                 config.FREQUENCIES[r["frequency"]],
                 money(r["amount"]) if income else "-" + money(r["amount"]),
-                "Ativa" if r["active"] else "Pausada"),
+                t("recurring.active") if r["active"] else t("recurring.paused")),
                 tags=("income" if income else "expense",) if r["active"] else ("muted",))
         self._sync_button()
 
     def _selected(self):
         iid = self.tree.selected()
         if iid is None:
-            self.app.toast("Selecione uma recorrência na lista.", "info")
+            self.app.toast(t("recurring.select_one"), "info")
             return None
         return self.rows.get(iid)
 
     def _sync_button(self):
         iid = self.tree.selected()
         row = self.rows.get(iid) if iid else None
-        self.pause_btn.set_text("Reativar" if row and not row["active"] else "Pausar")
+        self.pause_btn.set_text(t("recurring.resume") if row and not row["active"] else t("recurring.pause"))
 
     def new(self):
         if dialogs.RecurringDialog(self.app).wait():

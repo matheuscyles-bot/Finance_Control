@@ -8,6 +8,7 @@ from tkinter import ttk
 from frontend import theme
 from frontend.theme import c, font
 from backend.utils import formatters
+from backend.utils.i18n import t
 
 
 # ----------------------------------------------------------------------
@@ -317,12 +318,6 @@ def combo(parent, values, variable=None, width=22):
     return cb
 
 
-_MONTHS = (
-    "jan", "fev", "mar", "abr", "mai", "jun",
-    "jul", "ago", "set", "out", "nov", "dez",
-)
-
-
 def _wheel_date(current, component, step, preferred_day):
     """Move um componente da data e mantém dia/mês/ano sempre válidos."""
     if component == "day":
@@ -360,10 +355,10 @@ class WheelDatePopup(tk.Toplevel):
         self.body = tk.Frame(self, bg=c("surface"), padx=18, pady=16)
         self.body.pack(padx=1, pady=1)
 
-        tk.Label(self.body, text="Escolha a data", bg=c("surface"),
+        tk.Label(self.body, text=t("calendar.choose_date"), bg=c("surface"),
                  fg=c("text"), font=font(13, "bold")).pack(anchor="w")
         tk.Label(
-            self.body, text="Role a roda do mouse sobre dia, mês ou ano",
+            self.body, text=t("calendar.wheel_hint"),
             bg=c("surface"), fg=c("muted"), font=font(9)
         ).pack(anchor="w", pady=(3, 12))
 
@@ -371,7 +366,9 @@ class WheelDatePopup(tk.Toplevel):
         wheels.pack(fill="x")
         self.values = {}
         for component, title, width in (
-            ("day", "DIA", 5), ("month", "MÊS", 7), ("year", "ANO", 7)
+            ("day", t("calendar.day"), 5),
+            ("month", t("calendar.month"), 7),
+            ("year", t("calendar.year"), 7),
         ):
             column = tk.Frame(wheels, bg=c("surface"), padx=5)
             column.pack(side="left", expand=True, fill="x")
@@ -410,8 +407,8 @@ class WheelDatePopup(tk.Toplevel):
 
         footer = tk.Frame(self.body, bg=c("surface"))
         footer.pack(fill="x", pady=(14, 0))
-        Button(footer, "Cancelar", self.close, "secondary", pad=(12, 6)).pack(side="right")
-        Button(footer, "Usar data", self._confirm, "primary", pad=(12, 6)).pack(
+        Button(footer, t("common.cancel"), self.close, "secondary", pad=(12, 6)).pack(side="right")
+        Button(footer, t("common.use_date"), self._confirm, "primary", pad=(12, 6)).pack(
             side="right", padx=(0, 8)
         )
 
@@ -465,7 +462,7 @@ class WheelDatePopup(tk.Toplevel):
 
     def _render(self):
         day_text = lambda value: f"{value:02d}"
-        month_text = lambda value: _MONTHS[value - 1]
+        month_text = lambda value: t(f"format.months_abbr.{value}")
         formatters_for = {
             "day": day_text, "month": month_text, "year": str,
         }
@@ -522,7 +519,7 @@ class DateField(tk.Frame):
         self._clear_label = None
         if optional:
             self._clear_label = tk.Label(
-                self, text="Limpar", bg=bg or c("surface"), fg=c("muted"),
+                self, text=t("calendar.clear"), bg=bg or c("surface"), fg=c("muted"),
                 font=font(9), cursor="hand2", padx=5
             )
             self._clear_label.pack(side="left")
@@ -541,12 +538,13 @@ class DateField(tk.Frame):
 
     def _render(self):
         self._date_label.configure(
-            text=self._selected.strftime("%d/%m/%Y") if self._selected else "Selecionar data",
+            text=formatters.format_date(self._selected.isoformat())
+            if self._selected else t("common.select_date"),
             fg=c("text") if self._selected else c("muted")
         )
 
     def get(self):
-        return self._selected.strftime("%d/%m/%Y") if self._selected else ""
+        return formatters.format_date(self._selected.isoformat()) if self._selected else ""
 
     def set_iso(self, iso):
         self._selected = date.fromisoformat(formatters.parse_date(iso))
@@ -554,14 +552,14 @@ class DateField(tk.Frame):
 
     def clear(self):
         if not self._optional:
-            raise ValueError("Este campo de data não pode ficar vazio.")
+            raise ValueError(t("validation.date_required"))
         self._selected = None
         self._render()
         self.event_generate("<<DateChanged>>")
 
     def get_iso(self):
         if self._selected is None:
-            raise ValueError("Escolha uma data.")
+            raise ValueError(t("calendar.choose_date"))
         return formatters.parse_date(self.get())
 
 

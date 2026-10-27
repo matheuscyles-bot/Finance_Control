@@ -17,23 +17,31 @@ from frontend.pages.transactions import TransactionsPage
 from frontend.theme import MOD, MOD_LABEL, SPACING, c, font
 from frontend.widgets import Icon, rounded_image, Toasts, label
 from backend.utils import formatters
+from backend.utils import i18n
+from backend.utils.i18n import t
 
 log = logging.getLogger("finance_control.ui")
 
 NAV = [
-    ("dashboard", "Painel", "dashboard", DashboardPage),
-    ("transactions", "Movimentações", "list", TransactionsPage),
-    ("accounts", "Contas", "wallet", AccountsPage),
-    ("budgets", "Orçamentos", "target", BudgetsPage),
-    ("reports", "Relatórios", "chart", ReportsPage),
-    ("recurring", "Recorrências", "repeat", RecurringPage),
-    ("settings", "Configurações", "gear", SettingsPage),
+    ("dashboard", "dashboard", DashboardPage),
+    ("transactions", "list", TransactionsPage),
+    ("accounts", "wallet", AccountsPage),
+    ("budgets", "target", BudgetsPage),
+    ("reports", "chart", ReportsPage),
+    ("recurring", "repeat", RecurringPage),
+    ("settings", "gear", SettingsPage),
 ]
 
 
 class App:
     def __init__(self, root=None):
         self.root = root or tk.Tk()
+        try:
+            i18n.configure(database.DATA_DIR, database.BASE_DIR)
+            self._language_load_error = False
+        except i18n.LocaleConfigError as exc:
+            log.error("Não foi possível carregar a preferência de idioma: %s", type(exc).__name__)
+            self._language_load_error = True
         self.root.title(config.APP_TITLE)
         self.root.geometry(f"{config.WINDOW_WIDTH}x{config.WINDOW_HEIGHT}")
         self.root.minsize(config.MIN_WIDTH, config.MIN_HEIGHT)
@@ -45,6 +53,8 @@ class App:
         theme.apply(self.root, settings.get_theme())
         self.toasts = Toasts(self.root)
         self._startup_tasks()
+        if self._language_load_error:
+            self.startup_notes.append(t("toast.language_load_error"))
         self._build_shell()
         self._bind_shortcuts()
         self.navigate("dashboard")
@@ -114,16 +124,16 @@ class App:
         self.toggle_btn.pack(fill="x", padx=20, pady=(0, 10))
         self.toggle_btn.bind("<Button-1>", lambda e: self.toggle_sidebar())
 
-        nav_label = tk.Label(side, text="WORKSPACE", bg=c("sidebar"),
+        nav_label = tk.Label(side, text=t("app.workspace"), bg=c("sidebar"),
                              fg=c("muted"), font=font(8, "bold"), anchor="w")
         nav_label.pack(fill="x", padx=24, pady=(0, 8))
         self.hideables.append(nav_label)
-        for key, text, icon, _cls in NAV:
+        for key, icon, _cls in NAV:
             if key != "settings":
-                self._nav_item(side, key, text, icon)
+                self._nav_item(side, key, t(f"nav.{key}"), icon)
         tk.Frame(side, bg=c("sidebar")).pack(fill="both", expand=True)
         tk.Frame(side, bg=c("border"), height=1).pack(fill="x", padx=18, pady=(0, 12))
-        self._nav_item(side, "settings", "Configurações", "gear")
+        self._nav_item(side, "settings", t("nav.settings"), "gear")
         footer = tk.Label(side, text=f"FINANCE CONTROL  ·  {config.APP_VERSION}",
                           bg=c("sidebar"), fg=c("muted"), font=font(8))
         footer.pack(anchor="w", padx=22, pady=(12, 16))
@@ -219,10 +229,10 @@ class App:
             page.pack_forget()
         page = self.pages.get(key)
         if page is None:
-            cls = next(n[3] for n in NAV if n[0] == key)
+            cls = next(n[2] for n in NAV if n[0] == key)
             page = cls(self.body, self)
             self.pages[key] = page
-        self.title_label.configure(text=page.title)
+        self.title_label.configure(text=t(page.title_key))
         for w in self.actions.winfo_children():
             w.destroy()
         for b in page.header_actions(self.actions):
@@ -296,6 +306,18 @@ class App:
         settings.set_setting("currency_symbol", symbol)
         formatters.set_currency_symbol(symbol)
         self.after_change()
+
+    def set_language(self, code):
+        if code == i18n.get_locale():
+            return
+        try:
+            i18n.set_locale(code)
+        except i18n.LocaleConfigError:
+            self.toast(t("toast.language_save_error"), "error")
+            return
+        theme.apply(self.root, settings.get_theme())
+        self._build_shell()
+        self.navigate("settings")
 
     # ---- erros ----
     def report_error(self, exc):

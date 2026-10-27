@@ -1,6 +1,7 @@
 """Fluxo de ponta a ponta pela interface real (precisa de tkinter e de uma
 tela; em servidor sem tela use ``xvfb-run``). Usa banco temporário."""
 
+import json
 import shutil
 import tempfile
 import unittest
@@ -146,6 +147,26 @@ class UiFlowTests(unittest.TestCase):
         self.app.root.update()
         self.assertEqual(settings.get_currency_symbol(), "R$")
         self.assertEqual(settings.get_theme(), "dark")
+
+    def test_language_switch_rebuilds_every_page(self):
+        from backend.utils import i18n
+        from backend.utils.i18n import t
+        from frontend.app import NAV
+
+        for code in i18n.SUPPORTED_LOCALES:
+            with self.subTest(locale=code):
+                self.app.set_language(code)
+                self.app.root.update()
+                for key, *_ in NAV:
+                    self.app.navigate(key)
+                    self.app.root.update()
+                    page = self.app.pages[key]
+                    self.assertEqual(self.app.title_label.cget("text"), t(page.title_key))
+                if i18n._preference_path.exists():
+                    saved = i18n._preference_path.read_text(encoding="utf-8")
+                    self.assertEqual(json.loads(saved)["language"], code)
+                else:
+                    self.assertEqual(i18n.get_locale(), code)
 
     def test_date_picker_takes_and_restores_modal_grab(self):
         dialog = self.dialogs.TransactionDialog(self.app)

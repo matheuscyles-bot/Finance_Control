@@ -1,4 +1,4 @@
-"""Formatação de moeda, datas e meses (interface em português do Brasil)."""
+"""Locale-aware display formatting while retaining ISO dates and minor units."""
 
 import calendar
 import re
@@ -10,16 +10,7 @@ from backend.utils.money import (  # noqa: F401  (reexportados para o restante d
     format_money_compact,
     parse_amount,
 )
-
-MONTH_NAMES = [
-    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
-]
-MONTH_ABBR = [
-    "jan", "fev", "mar", "abr", "mai", "jun",
-    "jul", "ago", "set", "out", "nov", "dez",
-]
-WEEKDAY_ABBR = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"]
+from backend.utils.i18n import get_locale, t
 
 _currency_symbol = DEFAULT_CURRENCY
 
@@ -59,64 +50,69 @@ def current_month():
     return date.today().strftime("%Y-%m")
 
 
-_DATE_PATTERNS = (
-    (re.compile(r"^(\d{4})-(\d{1,2})-(\d{1,2})$"), ("y", "m", "d")),
-    (re.compile(r"^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$"), ("d", "m", "y")),
-    (re.compile(r"^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2})$"), ("d", "m", "y2")),
-)
-
-
 def parse_date(text):
-    """Aceita DD/MM/AAAA, DD-MM-AAAA, DD/MM/AA e AAAA-MM-DD. Devolve ISO."""
-    message = "Data inválida. Use DD/MM/AAAA, por exemplo 11/10/2026."
+    """Parse the active locale's date order plus ISO dates; return ISO."""
+    message = t("validation.date_invalid")
     if isinstance(text, date):
         return text.isoformat()
     value = str(text or "").strip()
-
-    for pattern, order in _DATE_PATTERNS:
-        match = pattern.match(value)
-        if not match:
-            continue
-        parts = dict(zip(order, match.groups()))
-        year = parts.get("y") or parts.get("y2")
-        year = int(year) + (2000 if "y2" in parts else 0)
-        try:
-            return date(year, int(parts["m"]), int(parts["d"])).isoformat()
-        except ValueError as exc:
-            raise ValueError(message) from exc
-    raise ValueError(message)
+    if re.fullmatch(r"\d{4}-\d{1,2}-\d{1,2}", value):
+        order = ("y", "m", "d")
+    else:
+        pattern = t("format.date_pattern")
+        order = tuple(re.split(r"[/.-]", pattern))
+    pieces = re.split(r"[/.-]", value)
+    if len(pieces) != 3 or len(order) != 3:
+        raise ValueError(message)
+    parts = dict(zip(order, pieces))
+    if not all(part.isdigit() for part in pieces):
+        raise ValueError(message)
+    year = int(parts["yyyy"] if "yyyy" in parts else parts["yy"] if "yy" in parts else parts["y"])
+    if year < 100:
+        year += 2000
+    try:
+        return date(year, int(parts["mm"] if "mm" in parts else parts["m"]),
+                    int(parts["dd"] if "dd" in parts else parts["d"])).isoformat()
+    except (ValueError, KeyError) as exc:
+        raise ValueError(message) from exc
 
 
 def parse_month(text):
     value = str(text or "").strip()
     if re.match(r"^\d{4}-(0[1-9]|1[0-2])$", value):
         return value
-    raise ValueError("Mês inválido. Use AAAA-MM, por exemplo 2026-10.")
+    raise ValueError(t("validation.month_invalid"))
 
 
 def format_date(iso):
-    """2026-10-11 -> 11/10/2026."""
+    """Format an ISO date in the active locale."""
     try:
-        return datetime.strptime(iso, "%Y-%m-%d").strftime("%d/%m/%Y")
+        value = datetime.strptime(iso, "%Y-%m-%d")
+        pattern = t("format.date_pattern")
+        return (pattern.replace("yyyy", f"{value.year:04d}")
+                .replace("dd", f"{value.day:02d}")
+                .replace("mm", f"{value.month:02d}"))
     except (TypeError, ValueError):
         return iso or ""
 
 
 def format_date_short(iso):
-    """2026-10-11 -> 11 out."""
+    """Format a short date for compact tables."""
     try:
         d = datetime.strptime(iso, "%Y-%m-%d")
-        return f"{d.day:02d} {MONTH_ABBR[d.month - 1]}"
+        return t("format.short_date_pattern", day=d.day,
+                 month=t(f"format.months_abbr.{d.month}"))
     except (TypeError, ValueError):
         return iso or ""
 
 
 def month_label(yyyy_mm, short=False):
-    """2026-10 -> Outubro 2026 (ou out/26)."""
+    """Format a month label for the active locale."""
     year, month = (int(p) for p in yyyy_mm.split("-"))
+    name = t(f"format.months_abbr.{month}" if short else f"format.months.{month}")
     if short:
-        return f"{MONTH_ABBR[month - 1]}/{str(year)[2:]}"
-    return f"{MONTH_NAMES[month - 1].capitalize()} {year}"
+        return t("format.short_month_year_pattern", month=name, year=str(year)[2:])
+    return t("format.month_year_pattern", month=name, year=year)
 
 
 def shift_month(yyyy_mm, delta):

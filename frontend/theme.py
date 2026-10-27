@@ -64,8 +64,12 @@ def font(size=11, weight="normal"):
 
 def _pick_family(root):
     available = set(tkfont.families(root))
-    for name in ("SF Pro Text", ".AppleSystemUIFont", "Helvetica Neue",
-                 "Segoe UI", "Inter", "Noto Sans", "DejaVu Sans", "Helvetica"):
+    for name in (
+        "Noto Sans CJK SC", "Noto Sans CJK JP", "Noto Sans",
+        "Arial Unicode MS", "Yu Gothic", "Hiragino Sans",
+        "Microsoft YaHei", "SF Pro Text", ".AppleSystemUIFont",
+        "Helvetica Neue", "Segoe UI", "Inter", "DejaVu Sans", "Helvetica",
+    ):
         if name in available:
             return name
     return tkfont.nametofont("TkDefaultFont").actual("family")

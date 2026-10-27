@@ -7,13 +7,12 @@ Nunca usamos float para cálculos financeiros.
 import re
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
+from backend.utils.i18n import get_locale, t
+
 MAX_MINOR = 99_999_999_999  # 999.999.999,99
 
 _SYMBOLS = ("R$", "£", "€", "$")
 _ONLY_NUMBER = re.compile(r"^[\d.,]+$")
-
-_DEFAULT_HELP = "Digite um valor válido, por exemplo 25,50."
-
 
 def parse_amount(value):
     """Converte texto em valor inteiro (centavos). Sempre maior que zero.
@@ -21,7 +20,7 @@ def parse_amount(value):
     Aceita 25.50, 25,50, 1.234,56, 1,234.56, 1000, "£ 12,90", "R$ 5".
     """
     if value is None:
-        raise ValueError("Informe um valor.")
+        raise ValueError(t("validation.amount_required"))
 
     if isinstance(value, (int, float, Decimal)) and not isinstance(value, bool):
         number = Decimal(str(value))
@@ -32,31 +31,30 @@ def parse_amount(value):
 
     if text is not None:
         if not text:
-            raise ValueError("Informe um valor.")
+            raise ValueError(t("validation.amount_required"))
         for symbol in _SYMBOLS:
             text = text.replace(symbol, "")
         text = re.sub(r"[\s ]", "", text)
 
         if text.startswith("-") or text.startswith("("):
             raise ValueError(
-                "O valor deve ser maior que zero. "
-                "Use o tipo Receita ou Despesa para indicar o sentido."
+                t("validation.amount_negative")
             )
         if not _ONLY_NUMBER.match(text):
-            raise ValueError(_DEFAULT_HELP)
+            raise ValueError(t("validation.amount_help"))
         number = _decimal_from_text(text)
 
     try:
         number = number.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     except InvalidOperation as exc:
-        raise ValueError(_DEFAULT_HELP) from exc
+        raise ValueError(t("validation.amount_help")) from exc
 
     if number <= 0:
-        raise ValueError("O valor deve ser maior que zero.")
+        raise ValueError(t("validation.amount_positive"))
 
     minor = int(number * 100)
     if minor > MAX_MINOR:
-        raise ValueError("Valor muito alto.")
+        raise ValueError(t("validation.amount_too_high"))
     return minor
 
 
@@ -69,14 +67,14 @@ def _decimal_from_text(text):
         thousands_sep = "," if decimal_sep == "." else "."
         left, _, right = text.rpartition(decimal_sep)
         if decimal_sep in left:
-            raise ValueError(_DEFAULT_HELP)
+            raise ValueError(t("validation.amount_help"))
         groups = left.split(thousands_sep)
         if any(not g.isdigit() for g in groups) or any(
             len(g) != 3 for g in groups[1:]
         ) or len(groups[0]) > 3:
-            raise ValueError(_DEFAULT_HELP)
+            raise ValueError(t("validation.amount_help"))
         if not right.isdigit():
-            raise ValueError(_DEFAULT_HELP)
+            raise ValueError(t("validation.amount_help"))
         normalized = "".join(groups) + "." + right
     elif last_dot != -1 or last_comma != -1:
         sep = "." if last_dot != -1 else ","
@@ -86,18 +84,18 @@ def _decimal_from_text(text):
             if any(len(p) != 3 or not p.isdigit() for p in parts[1:]) or not (
                 parts[0].isdigit() and len(parts[0]) <= 3
             ):
-                raise ValueError(_DEFAULT_HELP)
+                raise ValueError(t("validation.amount_help"))
             normalized = "".join(parts)
         else:
             left, right = parts
             if (left and not left.isdigit()) or (right and not right.isdigit()):
-                raise ValueError(_DEFAULT_HELP)
+                raise ValueError(t("validation.amount_help"))
             if len(right) == 3 and left not in ("", "0"):
                 if len(left) > 3:
-                    raise ValueError("Use no máximo 2 casas decimais.")
+                    raise ValueError(t("validation.decimal_places"))
                 normalized = left + right  # 1,000 ou 1.000 -> mil
             elif len(right) > 2:
-                raise ValueError("Use no máximo 2 casas decimais.")
+                raise ValueError(t("validation.decimal_places"))
             else:
                 normalized = (left or "0") + "." + (right or "0")
     else:
@@ -106,11 +104,11 @@ def _decimal_from_text(text):
     try:
         return Decimal(normalized)
     except InvalidOperation as exc:
-        raise ValueError(_DEFAULT_HELP) from exc
+        raise ValueError(t("validation.amount_help")) from exc
 
 
 def format_money(minor, symbol="£", signed=False):
-    """Formata centavos como dinheiro. R$ usa o padrão brasileiro."""
+    """Format minor currency units with the active locale's separators."""
     minor = int(minor or 0)
     if minor < 0:
         sign = "-"
@@ -120,27 +118,40 @@ def format_money(minor, symbol="£", signed=False):
         sign = ""
 
     whole, frac = divmod(abs(minor), 100)
-    if symbol == "R$":
-        body = f"{whole:,}".replace(",", ".") + f",{frac:02d}"
-        return f"{sign}R$ {body}"
-    return f"{sign}{symbol}{whole:,}.{frac:02d}"
+    body = _grouped_number(whole, frac)
+    return sign + _place_currency(body, symbol)
 
 
 def format_money_compact(minor, symbol="£"):
-    """Versão curta para eixos de gráficos: 1,2 mil / 3,4 mi."""
+    """Compact amount for chart axes."""
     value = abs(int(minor or 0)) / 100
     sign = "-" if (minor or 0) < 0 else ""
     if value >= 1_000_000:
-        text = f"{value / 1_000_000:.1f} mi"
+        text = f"{value / 1_000_000:.1f}{t('format.compact_million')}"
     elif value >= 10_000:
-        text = f"{value / 1_000:.0f} mil"
+        text = f"{value / 1_000:.0f} {t('format.compact_thousand')}"
     elif value >= 1_000:
-        text = f"{value / 1_000:.1f} mil"
+        text = f"{value / 1_000:.1f} {t('format.compact_thousand')}"
     else:
         text = f"{value:.0f}"
-    if symbol == "R$":
-        text = text.replace(".", ",")
-    return f"{sign}{symbol}{text}"
+    decimal = t("format.decimal_separator")
+    if decimal != ".":
+        text = text.replace(".", decimal)
+    return sign + _place_currency(text, symbol)
+
+
+def _grouped_number(whole, frac):
+    group = t("format.group_separator")
+    decimal = t("format.decimal_separator")
+    return f"{whole:,}".replace(",", group) + decimal + f"{frac:02d}"
+
+
+def _place_currency(amount, symbol):
+    position = t("format.currency_position")
+    if position == "before":
+        spacer = " " if symbol == "R$" or get_locale() == "pt-BR" else ""
+        return f"{symbol}{spacer}{amount}"
+    return f"{amount}\u00a0{symbol}"
 
 
 def split_installments(total_minor, count):
@@ -149,7 +160,7 @@ def split_installments(total_minor, count):
     Os centavos que sobram vão para as primeiras parcelas.
     """
     if count < 1:
-        raise ValueError("Número de parcelas inválido.")
+        raise ValueError(t("validation.installments_invalid"))
     base, remainder = divmod(int(total_minor), count)
     return [base + (1 if i < remainder else 0) for i in range(count)]
 

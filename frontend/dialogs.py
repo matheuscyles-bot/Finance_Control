@@ -11,6 +11,7 @@ from frontend.theme import SPACING, c, font
 from frontend.widgets import (Button, ChoiceCombo, DateField, Segmented, label, separator)
 from backend.utils import formatters
 from backend.utils.money import minor_to_text
+from backend.utils.i18n import category_label
 
 
 class Dialog(tk.Toplevel):
@@ -118,7 +119,7 @@ def prompt_text(app, title, label_text, initial="", save_text="Salvar", subtitle
 
 
 def _cat_items(kind):
-    return [(r["id"], r["name"]) for r in categories.get_categories(kind)]
+    return [(r["id"], category_label(r["name"])) for r in categories.get_categories(kind)]
 
 
 def _account_items(include=None):

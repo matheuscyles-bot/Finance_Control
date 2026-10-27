@@ -13,15 +13,10 @@ from frontend.widgets import (Button, Card, ChoiceCombo, DateField, EmptyState,
                         SortableTree, label)
 from backend.utils import formatters
 from backend.utils.formatters import money
-
-PERIODS = [
-    ("month", "Este mês"), ("last_month", "Mês passado"), ("90", "Últimos 90 dias"),
-    ("year", "Este ano"), ("all", "Todo o período"), ("custom", "Personalizado…"),
-]
-
+from backend.utils.i18n import category_label, t
 
 class TransactionsPage(Page):
-    title = "Movimentações"
+    title_key = "nav.transactions"
 
     def build(self):
         self.limit = config.PAGE_SIZE
@@ -38,11 +33,23 @@ class TransactionsPage(Page):
         b.grid_columnconfigure(0, weight=1)
         self.search_entry.insert(0, "")
         self.search.trace_add("write", lambda *a: self._debounce())
-        self.period = ChoiceCombo(b, PERIODS, width=13)
+        periods = [
+            ("month", t("common.month_current")),
+            ("last_month", t("common.month_previous")),
+            ("90", t("common.last_90_days")),
+            ("year", t("common.year_current")),
+            ("all", t("common.all_period")),
+            ("custom", t("common.custom")),
+        ]
+        self.period = ChoiceCombo(b, periods, width=13)
         self.period.set_id("month")
         self.period.grid(row=0, column=1, padx=(0, 10))
         self.period.bind("<<ComboboxSelected>>", lambda e: self._period_changed())
-        self.kind = ChoiceCombo(b, [("all", "Todos os tipos"), ("income", "Receitas"), ("expense", "Despesas")], width=13)
+        self.kind = ChoiceCombo(b, [
+            ("all", t("common.all_types")),
+            ("income", t("common.income")),
+            ("expense", t("common.expense")),
+        ], width=13)
         self.kind.grid(row=0, column=2, padx=(0, 10))
         self.kind.bind("<<ComboboxSelected>>", lambda e: self.reload())
         self.category = ChoiceCombo(b, [], width=18)
@@ -51,64 +58,64 @@ class TransactionsPage(Page):
         self.account = ChoiceCombo(b, [], width=16)
         self.account.grid(row=0, column=4, padx=(0, 10))
         self.account.bind("<<ComboboxSelected>>", lambda e: self.reload())
-        clear = tk.Label(b, text="Limpar filtros", fg=c("primary"), bg=c("surface"),
+        clear = tk.Label(b, text=t("common.clear_filters"), fg=c("primary"), bg=c("surface"),
                          font=font(10, "bold"), cursor="hand2")
         clear.grid(row=0, column=5)
         clear.bind("<Button-1>", lambda e: self.clear_filters())
         self.custom = tk.Frame(b, bg=c("surface"))
-        label(self.custom, "De", 10, color="muted").pack(side="left", padx=(0, 4))
+        label(self.custom, t("common.from"), 10, color="muted").pack(side="left", padx=(0, 4))
         self.start = DateField(self.custom, width=10)
         self.start.pack(side="left", padx=(0, 10))
-        label(self.custom, "até", 10, color="muted").pack(side="left", padx=(0, 4))
+        label(self.custom, t("common.until"), 10, color="muted").pack(side="left", padx=(0, 4))
         self.end = DateField(self.custom, width=10)
         self.end.pack(side="left")
         for f in (self.start, self.end):
             f.bind("<<DateChanged>>", lambda e: self.reload())
-        self.custom_btn = Button(self.custom, "Aplicar", self.reload, "secondary", pad=(10, 4))
+        self.custom_btn = Button(self.custom, t("common.apply"), self.reload, "secondary", pad=(10, 4))
         self.custom_btn.pack(side="left", padx=10)
 
         self.table_card = Card(self, 0, 0)
         self.table_card.pack(fill="both", expand=True, padx=32)
         columns = [
-            ("date", "Data", 100, "w", True),
-            ("description", "Descrição", 300, "w", True),
-            ("category", "Categoria", 160, "w", True),
-            ("account", "Conta", 140, "w", True),
-            ("amount", "Valor", 130, "e", True),
+            ("date", t("common.date"), 100, "w", True),
+            ("description", t("common.description"), 300, "w", True),
+            ("category", t("common.category"), 160, "w", True),
+            ("account", t("common.account"), 140, "w", True),
+            ("amount", t("common.amount"), 130, "e", True),
         ]
         self.table = SortableTree(self.table_card.body, columns, self._sorted, self.edit_selected, height=16)
         self.table.pack(fill="both", expand=True)
         self.table.mark_sort("date", True)
-        self.empty = EmptyState(self.table_card.body, "list", "Nenhuma movimentação encontrada",
-                                "Ajuste os filtros ou registre uma nova movimentação.",
-                                "Nova movimentação", self.app.new_transaction)
+        self.empty = EmptyState(self.table_card.body, "list", t("common.no_transactions"),
+                                t("common.adjust_filters"),
+                                t("common.new_transaction"), self.app.new_transaction)
 
         foot = tk.Frame(self, bg=c("bg"))
         foot.pack(fill="x", padx=32, pady=12)
         self.actions = tk.Frame(foot, bg=c("bg"))
         self.actions.pack(side="right")
-        self.more = Button(foot, "Carregar mais", self.load_more, "secondary", pad=(12, 6))
+        self.more = Button(foot, t("common.load_more"), self.load_more, "secondary", pad=(12, 6))
         self.summary = label(foot, "", 11, bg="bg", color="muted")
         self.summary.pack(side="left")
-        Button(self.actions, "Excluir", self.delete_selected, "secondary", pad=(12, 6)).pack(side="right")
-        Button(self.actions, "Duplicar", self.duplicate_selected, "secondary", pad=(12, 6)).pack(side="right", padx=8)
-        Button(self.actions, "Editar", self.edit_selected, "secondary", pad=(12, 6)).pack(side="right")
+        Button(self.actions, t("common.delete"), self.delete_selected, "secondary", pad=(12, 6)).pack(side="right")
+        Button(self.actions, t("common.duplicate"), self.duplicate_selected, "secondary", pad=(12, 6)).pack(side="right", padx=8)
+        Button(self.actions, t("common.edit"), self.edit_selected, "secondary", pad=(12, 6)).pack(side="right")
 
         self.table.tree.bind("<Delete>", lambda e: self.delete_selected())
         self.table.tree.bind("<BackSpace>", lambda e: self.delete_selected())
         self.menu = tk.Menu(self, tearoff=0)
-        self.menu.add_command(label="Editar", command=self.edit_selected)
-        self.menu.add_command(label="Duplicar", command=self.duplicate_selected)
+        self.menu.add_command(label=t("common.edit"), command=self.edit_selected)
+        self.menu.add_command(label=t("common.duplicate"), command=self.duplicate_selected)
         self.menu.add_separator()
-        self.menu.add_command(label="Excluir", command=self.delete_selected)
+        self.menu.add_command(label=t("common.delete"), command=self.delete_selected)
         for seq in ("<Button-2>", "<Button-3>", "<Control-Button-1>"):
             self.table.tree.bind(seq, self._popup)
 
     def header_actions(self, parent):
         return [
-            Button(parent, "Importar CSV", self.import_csv, "secondary", icon="upload"),
-            Button(parent, "Exportar CSV", self.export_csv, "secondary", icon="download"),
-            Button(parent, "Nova movimentação", self.app.new_transaction, "primary", icon="plus"),
+            Button(parent, t("common.import_csv"), self.import_csv, "secondary", icon="upload"),
+            Button(parent, t("common.export_csv"), self.export_csv, "secondary", icon="download"),
+            Button(parent, t("common.new_transaction"), self.app.new_transaction, "primary", icon="plus"),
         ]
 
     # ---------------- filtros ----------------
@@ -165,11 +172,11 @@ class TransactionsPage(Page):
     # ---------------- dados ----------------
     def refresh(self):
         super().refresh()
-        cat_items = [(-1, "Sem categoria")] + [
-            (r["id"], r["name"]) for r in categories.get_categories()]
-        self.category._empty = "Todas as categorias"
+        cat_items = [(-1, t("common.no_category"))] + [
+            (r["id"], category_label(r["name"])) for r in categories.get_categories()]
+        self.category._empty = t("common.all_categories")
         self.category.set_items(cat_items)
-        self.account._empty = "Todas as contas"
+        self.account._empty = t("common.all_accounts")
         self.account.set_items([(r["id"], r["name"]) for r in accounts.list_accounts(include_archived=True)])
         self.reload()
 
@@ -190,15 +197,16 @@ class TransactionsPage(Page):
             self.table.add(
                 r["id"],
                 (formatters.format_date(r["transaction_date"]), tx.describe(r),
-                 r["category_name"] or "Sem categoria", r["account_name"],
+                 category_label(r["category_name"]) if r["category_name"] else t("common.no_category"),
+                 r["account_name"],
                  ("+" if income else "-") + money(r["amount"])),
                 ("income" if income else "expense",))
         if selected and self.table.tree.exists(selected):
             self.table.tree.selection_set(selected)
         self._filters_active = filters
         shown = len(self.rows)
-        text = (f"{total['count']} movimentação(ões) · Receitas {money(total['income'])} · "
-                f"Despesas {money(total['expense'])} · Resultado {money(total['net'], signed=True)}")
+        text = t("transactions.summary", count=total["count"], income=money(total["income"]),
+                 expense=money(total["expense"]), net=money(total["net"], signed=True))
         self.summary.configure(text=text, fg=c("muted"))
         if shown < total["count"]:
             self.more.configure()
