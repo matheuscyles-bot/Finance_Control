@@ -760,7 +760,7 @@ class Toasts:
             canvas.tag_bind("action", "<Enter>", lambda e: canvas.configure(cursor="hand2"))
             canvas.tag_bind("action", "<Leave>", lambda e: canvas.configure(cursor=""))
         canvas.place(relx=0.5, rely=1.0, anchor="s", y=-12)
-        canvas.lift()
+        tk.Misc.lift(canvas)  # Canvas.lift move itens; aqui queremos o widget
         self.current = canvas
         motion.tween(canvas, 18, 0, 0.32, "power3.out",
                      lambda v: canvas.place_configure(y=-24 + v) if canvas.winfo_exists() else None)

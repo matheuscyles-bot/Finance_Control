@@ -80,6 +80,14 @@ class AreaChart(_Chart):
         self._render()
 
     def draw_progress(self):
+        # durante a animação só a "cortina" anda; o gráfico não é refeito
+        if self._layout and self.find_withtag("cover"):
+            left, _top, pw, _ph, *_ = self._layout
+            x = left - 2 + (pw + 14) * self.progress
+            self.coords("cover", x, 0, self.winfo_width(), self.winfo_height() - 26)
+            if self.progress >= 1:
+                self.delete("cover")
+            return
         self._render()
 
     def _render(self):
@@ -130,7 +138,8 @@ class AreaChart(_Chart):
 
         if self.progress < 1:
             cover_x = left - 2 + (pw + right + 4) * self.progress
-            self.create_rectangle(cover_x, 0, w, h - bottom + 4, fill=self.bg, outline=self.bg)
+            self.create_rectangle(cover_x, 0, w, h - bottom + 4, fill=self.bg, outline=self.bg,
+                                  tags="cover")
             self.tag_raise("axis")
 
     def _hover(self, e):

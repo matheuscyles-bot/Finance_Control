@@ -35,7 +35,7 @@ def show_tip(root, text, x, y, anchor="n"):
     round_rect(tip, 1, 1, w - 1, h - 1, h / 2, c("toast"), mix(c("toast"), c("text"), 0.12))
     tip.create_text(w / 2, h / 2, text=text, font=f, fill=c("toast_text"))
     tip.place(x=x, y=y)
-    tip.lift()
+    tk.Misc.lift(tip)  # Canvas.lift move itens; aqui queremos o widget
     _TIP["widget"] = tip
 
 
@@ -627,7 +627,7 @@ class Popover:
         if align == "right":
             x = x + anchor.winfo_width() - width
         self.card.place(x=max(x, 8), y=y, width=width)
-        self.card.lift()
+        tk.Misc.lift(self.card)
         Popover.current = self
         self._bind = root.bind_all("<Button-1>", self._outside, add="+")
         root.bind_all("<Escape>", lambda e: self.close(), add="+")

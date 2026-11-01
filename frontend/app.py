@@ -734,7 +734,10 @@ class App:
 
     def _tk_exception(self, exc_type, exc, tb):
         log.error("Erro na interface: %s", exc_type.__name__, exc_info=(exc_type, exc, tb))
-        self.toast(t("toast.ui_error"), "error")
+        try:
+            self.toast(t("toast.ui_error"), "error")
+        except Exception:  # o aviso nunca pode derrubar o app
+            log.error("Falha ao mostrar o aviso de erro", exc_info=True)
 
     # ---- atalhos ----
     def _bind_shortcuts(self):
