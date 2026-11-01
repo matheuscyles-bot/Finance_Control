@@ -129,7 +129,5 @@ def apply(root, name):
     style.map("TSpinbox", bordercolor=[("focus", p["primary"])])
     style.configure("TCheckbutton", background=p["surface"], foreground=p["text"])
     style.map("TCheckbutton", foreground=[("active", p["text"])])
-    style.configure("Vertical.TScrollbar", background=p["border"], troughcolor=p["bg"],
-                    bordercolor=p["bg"], arrowcolor=p["muted"], relief="flat")
     style.configure("TSeparator", background=p["border"])
     return style

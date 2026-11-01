@@ -92,9 +92,11 @@ class Icon(tk.Canvas):
 # Botões
 # ----------------------------------------------------------------------
 
-class Button(tk.Frame):
-    """Botão plano (tk.Button ignora cores no macOS, por isso é desenhado)."""
+class Button(tk.Canvas):
+    """Botão com cantos arredondados (mesmo desenho da barra lateral).
+    É desenhado em canvas porque tk.Button ignora cores no macOS."""
 
+    RADIUS = 10
     KINDS = {
         "primary": ("primary", "primary_hover", "primary_text", None),
         "danger": ("danger", "danger_hover", "primary_text", None),
@@ -106,25 +108,33 @@ class Button(tk.Frame):
                  pad=(14, 8), parent_bg=None):
         bg_key, hover_key, fg_key, border = self.KINDS[kind]
         self._bg, self._hover = c(bg_key), c(hover_key)
-        fg = self._fg = c(fg_key)
-        super().__init__(parent, bg=self._bg, cursor="hand2",
-                         highlightthickness=1 if border else 0,
-                         highlightbackground=c(border) if border else self._bg,
-                         highlightcolor=c(border) if border else self._bg)
+        self._border = c(border) if border else None
+        self._fg = c(fg_key)
+        if parent_bg is None:
+            try:
+                parent_bg = parent.cget("bg")
+            except tk.TclError:
+                parent_bg = c("bg")
+        self._parent_bg = parent_bg
+        super().__init__(parent, bg=parent_bg, highlightthickness=0, bd=0, cursor="hand2")
         self.command = command
         self.enabled = True
-        self._parts = []
-        inner = tk.Frame(self, bg=self._bg)
-        inner.pack(padx=pad[0], pady=pad[1])
+        self._fill = self._bg
+        self._pad = pad
+        # o conteúdo fica no centro; a margem em volta mostra o fundo arredondado
+        self._inner = tk.Frame(self, bg=self._bg)
+        self.create_window(pad[0], pad[1], window=self._inner, anchor="nw")
+        self._parts = [self._inner]
         if icon:
-            ic = Icon(inner, icon, fg, self._bg, 16)
+            ic = Icon(self._inner, icon, self._fg, self._bg, 16)
             ic.pack(side="left", padx=(0, 6))
             self._parts.append(ic)
-        self.label = tk.Label(inner, text=text, bg=self._bg, fg=fg,
+        self.label = tk.Label(self._inner, text=text, bg=self._bg, fg=self._fg,
                               font=font(11, "bold" if kind in ("primary", "danger") else "normal"))
         self.label.pack(side="left")
-        self._inner = inner
-        self._parts += [inner, self.label]
+        self._parts.append(self.label)
+        self._inner.bind("<Configure>", self._fit)
+        self.bind("<Configure>", self._redraw)
         for w in [self] + self._parts:
             w.bind("<Enter>", self._enter)
             w.bind("<Leave>", self._leave)
@@ -133,12 +143,26 @@ class Button(tk.Frame):
         self.bind("<Return>", self._click)
         self.bind("<space>", self._click)
 
+    def _fit(self, _e=None):
+        padx, pady = self._pad
+        self.configure(width=self._inner.winfo_reqwidth() + 2 * padx,
+                       height=self._inner.winfo_reqheight() + 2 * pady)
+
+    def _redraw(self, _e=None):
+        w, h = self.winfo_width(), self.winfo_height()
+        if w < 2 or h < 2:
+            return
+        img = rounded_image(w, h, self.RADIUS, self._fill, self._border,
+                            self._parent_bg, master=self)
+        self.delete("bg")
+        self.create_image(0, 0, image=img, anchor="nw", tags="bg")
+        self.tag_lower("bg")
+
     def _paint(self, color):
-        self.configure(bg=color)
+        self._fill = color
         for w in self._parts:
             w.configure(bg=color)
-            if isinstance(w, Icon):
-                w.configure(bg=color)
+        self._redraw()
 
     def _enter(self, _e):
         if self.enabled:
@@ -226,7 +250,10 @@ class Card(tk.Canvas):
                        height=self.body.winfo_reqheight() + 2 * self._pady)
 
     def _redraw(self, e):
-        self.itemconfigure(self._win, width=max(e.width - 2 * self._padx, 1))
+        # o conteúdo ocupa todo o cartão (não só a altura pedida), para o
+        # painel interno não parar no meio do cartão
+        self.itemconfigure(self._win, width=max(e.width - 2 * self._padx, 1),
+                           height=max(e.height - 2 * self._pady, 1))
         self.delete("bg")
         r = self.RADIUS
         x1, y1, x2, y2 = 1, 1, e.width - 2, e.height - 2
@@ -247,16 +274,14 @@ def separator(parent, bg="border"):
 
 
 class ScrollFrame(tk.Frame):
-    """Área rolável vertical; o conteúdo acompanha a largura da janela."""
+    """Área rolável vertical, sem barra visível (use a roda do mouse ou o
+    trackpad); o conteúdo acompanha a largura da janela."""
 
     def __init__(self, parent, bg=None):
         bg = bg or c("bg")
         super().__init__(parent, bg=bg)
         self.canvas = tk.Canvas(self, bg=bg, highlightthickness=0, bd=0)
-        self.bar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.canvas.configure(yscrollcommand=self.bar.set)
         self.canvas.pack(side="left", fill="both", expand=True)
-        self.bar.pack(side="right", fill="y")
         self.inner = tk.Frame(self.canvas, bg=bg)
         self._win = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
         self.inner.bind("<Configure>", self._on_inner)
@@ -267,18 +292,9 @@ class ScrollFrame(tk.Frame):
 
     def _on_inner(self, _e):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        self._toggle_bar()
 
     def _on_canvas(self, e):
         self.canvas.itemconfigure(self._win, width=e.width)
-        self._toggle_bar()
-
-    def _toggle_bar(self):
-        need = self.inner.winfo_reqheight() > self.canvas.winfo_height()
-        if need and not self.bar.winfo_ismapped():
-            self.bar.pack(side="right", fill="y")
-        elif not need and self.bar.winfo_ismapped():
-            self.bar.pack_forget()
 
     def _bind_wheel(self, on):
         top = self.winfo_toplevel()
@@ -291,8 +307,8 @@ class ScrollFrame(tk.Frame):
                 top.unbind_all(seq)
 
     def _wheel(self, e):
-        if not self.bar.winfo_ismapped():
-            return
+        if self.inner.winfo_reqheight() <= self.canvas.winfo_height():
+            return  # conteúdo cabe na tela: nada para rolar
         if e.num == 4:
             step = -2
         elif e.num == 5:
@@ -567,8 +583,9 @@ class DateField(tk.Frame):
 # ----------------------------------------------------------------------
 
 class SortableTree(tk.Frame):
-    """Tabela com cabeçalhos clicáveis (ordenação feita no banco) e
-    barra de rolagem. columns: [(id, título, largura, anchor, ordenável)]."""
+    """Tabela com cabeçalhos clicáveis (ordenação feita no banco), sem barra
+    de rolagem visível (use a roda do mouse ou o trackpad).
+    columns: [(id, título, largura, anchor, ordenável)]."""
 
     def __init__(self, parent, columns, on_sort=None, on_open=None, height=14):
         super().__init__(parent, bg=c("surface"))
@@ -578,10 +595,7 @@ class SortableTree(tk.Frame):
         ids = [col[0] for col in columns]
         self.tree = ttk.Treeview(self, columns=ids, show="headings",
                                  selectmode="browse", height=height)
-        self.bar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscrollcommand=self.bar.set)
         self.tree.grid(row=0, column=0, sticky="nsew")
-        self.bar.grid(row=0, column=1, sticky="ns")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         for cid, title, width, anchor, sortable in columns:
