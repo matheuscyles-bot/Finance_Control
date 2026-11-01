@@ -22,3 +22,8 @@ data/
 credentials/
 secrets/
 .DS_Store
+node_modules/
+.venv/
+venv/
+.next/
+*.zip
