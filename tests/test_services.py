@@ -1,7 +1,6 @@
 import csv
 import sqlite3
 import unittest
-from datetime import date
 
 from tests.base import DbTestCase
 import database

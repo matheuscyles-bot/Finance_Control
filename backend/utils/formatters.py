@@ -10,7 +10,7 @@ from backend.utils.money import (  # noqa: F401  (reexportados para o restante d
     format_money_compact,
     parse_amount,
 )
-from backend.utils.i18n import get_locale, t
+from backend.utils.i18n import t
 
 _currency_symbol = DEFAULT_CURRENCY
 

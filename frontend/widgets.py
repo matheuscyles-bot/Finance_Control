@@ -5,7 +5,6 @@ import tkinter as tk
 from datetime import date
 from tkinter import ttk
 
-from frontend import theme
 from frontend.theme import c, font
 from backend.utils import formatters
 from backend.utils.i18n import t

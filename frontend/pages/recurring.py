@@ -6,7 +6,7 @@ from backend import config
 from backend.services import recurring
 from frontend import dialogs
 from frontend.pages.base import Page
-from frontend.theme import c, font
+from frontend.theme import c
 from frontend.widgets import Button, Card, EmptyState, SortableTree, label
 from backend.utils import formatters
 from backend.utils.formatters import money

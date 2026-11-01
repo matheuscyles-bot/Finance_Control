@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from backend.services import accounts, reports
 from frontend.charts import BarChart, ProgressBar
 from frontend.pages.base import Page, change_note, kpi_card
-from frontend.theme import c, font
+from frontend.theme import c
 from frontend.widgets import (Button, Card, ChoiceCombo, DateField, EmptyState,
                         ScrollFrame, Segmented, label)
 from backend.utils import formatters

@@ -8,7 +8,7 @@ from backend import config
 from backend.services import accounts, categories, importer, transactions as tx
 from frontend import dialogs
 from frontend.pages.base import Page
-from frontend.theme import MOD, MOD_LABEL, c, font
+from frontend.theme import c, font
 from frontend.widgets import (Button, Card, ChoiceCombo, DateField, EmptyState,
                         SortableTree, label)
 from backend.utils import formatters

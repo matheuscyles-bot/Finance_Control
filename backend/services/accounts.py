@@ -20,8 +20,8 @@ from backend.utils.validators import (
 
 def _balance_sql(today_clause):
     """Expressão SQL do saldo: saldo inicial + movimentações + transferências."""
-    where_t = f" AND t.transaction_date <= :today" if today_clause else ""
-    where_x = f" AND x.transfer_date <= :today" if today_clause else ""
+    where_t = " AND t.transaction_date <= :today" if today_clause else ""
+    where_x = " AND x.transfer_date <= :today" if today_clause else ""
     return f"""
         a.opening_balance
         + COALESCE((SELECT SUM(CASE t.kind WHEN 'income' THEN t.amount

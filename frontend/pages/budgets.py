@@ -6,9 +6,8 @@ from backend.services import budgets
 from frontend import dialogs
 from frontend.charts import ProgressBar
 from frontend.pages.base import MonthBar, Page
-from frontend.theme import c, font
+from frontend.theme import c
 from frontend.widgets import Button, Card, EmptyState, ScrollFrame, label
-from backend.utils import formatters
 from backend.utils.formatters import money
 from backend.utils.i18n import category_label, t
 

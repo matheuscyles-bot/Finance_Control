@@ -5,7 +5,6 @@ cria os lançamentos vencidos. Um índice único (regra + data) garante que
 nunca haja duplicidade, mesmo se a rotina rodar duas vezes.
 """
 
-import calendar
 from datetime import date, datetime, timedelta
 
 from backend.config import FREQUENCIES

@@ -11,7 +11,7 @@ import database
 
 
 # setup_logging: configura o registro de eventos (logs) do app.
-# Grava em data/logs/app.log, com rotação: quando o arquivo passa de 500 KB,
+# Grava em <pasta de dados>/logs/app.log, com rotação: quando o arquivo passa de 500 KB,
 # ele é arquivado e são mantidos só 2 backups, para não crescer sem limite.
 # Se não conseguir criar a pasta ou o arquivo, cai para um log simples (só avisos).
 def setup_logging():

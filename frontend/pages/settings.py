@@ -9,7 +9,7 @@ from backend.services import backup, categories
 from frontend import dialogs
 from frontend.pages.base import Page
 from frontend.theme import c, font
-from frontend.widgets import Button, Card, ChoiceCombo, ScrollFrame, Segmented, label, separator
+from frontend.widgets import Button, Card, ChoiceCombo, ScrollFrame, Segmented, label
 from backend.utils import formatters
 from backend.utils import i18n
 from backend.utils.i18n import category_label, t

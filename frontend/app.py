@@ -5,7 +5,7 @@ import tkinter as tk
 
 from backend import config
 import database
-from backend.services import accounts, backup, recurring, settings, transactions as tx
+from backend.services import backup, recurring, settings, transactions as tx
 from frontend import dialogs, theme
 from frontend.pages.accounts import AccountsPage
 from frontend.pages.budgets import BudgetsPage
@@ -14,8 +14,8 @@ from frontend.pages.recurring import RecurringPage
 from frontend.pages.reports import ReportsPage
 from frontend.pages.settings import SettingsPage
 from frontend.pages.transactions import TransactionsPage
-from frontend.theme import MOD, MOD_LABEL, SPACING, c, font
-from frontend.widgets import Icon, rounded_image, Toasts, label
+from frontend.theme import MOD, SPACING, c, font
+from frontend.widgets import Icon, rounded_image, Toasts
 from backend.utils import formatters
 from backend.utils import i18n
 from backend.utils.i18n import t

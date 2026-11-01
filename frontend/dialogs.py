@@ -6,9 +6,8 @@ from tkinter import filedialog, ttk
 from backend import config
 from backend.services import (accounts, budgets, categories, importer, recurring,
                       transactions as tx)
-from frontend import theme
 from frontend.theme import SPACING, c, font
-from frontend.widgets import (Button, ChoiceCombo, DateField, Segmented, label, separator)
+from frontend.widgets import (Button, ChoiceCombo, DateField, Segmented, label)
 from backend.utils import formatters
 from backend.utils.money import minor_to_text
 from backend.utils.i18n import category_label

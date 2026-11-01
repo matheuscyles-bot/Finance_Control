@@ -3,7 +3,7 @@
 import tkinter as tk
 
 from frontend.theme import c, font
-from frontend.widgets import Button, Card, label
+from frontend.widgets import Card, label
 from backend.utils import formatters
 
 

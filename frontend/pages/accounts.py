@@ -7,10 +7,10 @@ from backend.services import accounts
 from frontend import dialogs
 from frontend.pages.base import Page
 from frontend.theme import c, font
-from frontend.widgets import Button, Card, EmptyState, ScrollFrame, SortableTree, label
+from frontend.widgets import Button, Card, ScrollFrame, SortableTree, label
 from backend.utils import formatters
 from backend.utils.formatters import money
-from backend.utils.i18n import category_label, t
+from backend.utils.i18n import t
 
 
 class AccountsPage(Page):
