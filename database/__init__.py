@@ -354,12 +354,12 @@ def init_db():
         except sqlite3.DatabaseError as exc:
             raise DatabaseError(
                 "O arquivo do banco de dados está danificado. "
-                "Restaure um backup em data/backups/."
+                f"Restaure um backup em {BACKUP_DIR}."
             ) from exc
         if check != "ok":
             raise DatabaseError(
                 "O banco de dados apresentou erros de integridade. "
-                "Restaure um backup em data/backups/."
+                f"Restaure um backup em {BACKUP_DIR}."
             )
 
         version = connection.execute("PRAGMA user_version").fetchone()[0]
