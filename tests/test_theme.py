@@ -7,14 +7,15 @@ from frontend.theme import PALETTES, SPACING
 class ThemeTests(unittest.TestCase):
     def test_premium_dark_palette(self):
         dark = PALETTES["dark"]
-        self.assertEqual(dark["bg"], "#0B0F14")
-        self.assertEqual(dark["sidebar"], "#101720")
-        self.assertEqual(dark["surface"], "#151D28")
-        self.assertEqual(dark["surface_alt"], "#1B2634")
-        self.assertEqual(dark["border"], "#2A3545")
-        self.assertEqual(dark["text"], "#F3F6FA")
-        self.assertEqual(dark["muted"], "#9AA8B8")
-        self.assertEqual(dark["primary"], "#5B8DEF")
+        self.assertEqual(dark["bg"], "#15120F")       # quase preto quente
+        self.assertEqual(dark["glow"], "#27303A")     # brilho azul-acinzentado
+        self.assertEqual(dark["surface"], "#211E1B")  # vidro dos cards
+        self.assertEqual(dark["primary"], "#B6F23A")  # verde-limão (destaque único)
+        self.assertEqual(dark["coral"], "#F08670")
+        self.assertEqual(dark["blue"], "#7FB6E6")
+
+    def test_palettes_share_the_same_tokens(self):
+        self.assertEqual(set(PALETTES["dark"]), set(PALETTES["light"]))
 
     def test_default_and_spacing_tokens(self):
         self.assertEqual(config.DEFAULT_THEME, "dark")
