@@ -20,8 +20,8 @@
 
 ## Redesign (branch `redesign-dashboard`)
 - Pronto: tokens, fontes, animações, componentes, gráficos, casca, serviço `planning`.
-- Páginas: 0 de 8 redesenhadas (ainda com conteúdo antigo dentro da casca nova).
-- Ordem: 1 dashboard (Visão geral) ← próxima · 2 pipeline (Vencimentos, nova) · 3 accounts · 4 schedule (Agenda, substitui recurring) · 5 transactions · 6 reports · 7 budgets · 8 settings.
+- Páginas: 1 de 8 redesenhadas (dashboard ✓). As demais mostram o conteúdo antigo dentro da casca nova.
+- Ordem: 1 dashboard (Visão geral) ✓ · 2 pipeline (Vencimentos, nova) ← próxima · 3 accounts · 4 schedule (Agenda, substitui recurring) · 5 transactions · 6 reports · 7 budgets · 8 settings.
 - Ao trocar `NAV` em app.py: abas = todas menos settings; atalhos ⌘1…⌘7.
 
 ## Regras

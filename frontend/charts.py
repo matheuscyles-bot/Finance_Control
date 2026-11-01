@@ -107,8 +107,9 @@ class AreaChart(_Chart):
         step = max(1, math.ceil(n / 7))
         for i, label in enumerate(self.labels):
             if i % step == 0 or i == n - 1:
+                anchor = "e" if i == n - 1 and n > 1 else "w" if i == 0 and n > 1 else "center"
                 self.create_text(xs[i], h - bottom + 18, text=label, fill=c("muted"),
-                                 font=axis_font, tags="axis")
+                                 font=axis_font, tags="axis", anchor=anchor)
 
         curve = monotone_curve(list(zip(xs, ys))) if n > 2 else list(zip(xs, ys))
         curve = [(x, min(y, top + ph)) for x, y in curve]
@@ -436,6 +437,47 @@ class ProgressBar(tk.Canvas):
         if self.shown > 0.002:
             self.create_line(t / 2 + 1, y, max(end, t / 2 + 1.5), y, fill=self.color, width=t,
                              capstyle="round")
+
+
+class MixBar(_Chart):
+    """Barra horizontal dividida por participação (ex.: gastos por categoria)."""
+
+    def __init__(self, parent, height=14, bg=None):
+        super().__init__(parent, height, bg=bg)
+        self.items = []
+
+    def set_data(self, items, animate=True):
+        """items: [(nome, valor, cor)]."""
+        self.items = list(items)
+        self._pending_animation = animate
+        if not self._maybe_animate(0.9, "power3.out"):
+            self.draw()
+
+    def draw(self):
+        if self._maybe_animate(0.9, "power3.out"):
+            return
+        self._render()
+
+    def draw_progress(self):
+        self._render()
+
+    def _render(self):
+        self.delete("all")
+        w, h = self.winfo_width(), self.winfo_height()
+        total = sum(v for _, v, _ in self.items)
+        if w < 20:
+            return
+        track = mix(self.bg, c("text"), 0.08)
+        round_rect(self, 0, 0, w, h, h / 2, track, track)
+        if not total:
+            return
+        gap, x = 3, 0.0
+        usable = (w - gap * (len(self.items) - 1)) * self.progress
+        for _name, value, color in self.items:
+            seg = usable * value / total
+            if seg >= 1:
+                round_rect(self, x, 0, x + seg, h, min(h / 2, seg / 2), color, color)
+            x += seg + gap
 
 
 BarChart = GroupedBars  # nome usado pelas páginas antigas

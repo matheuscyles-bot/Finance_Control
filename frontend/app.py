@@ -459,7 +459,7 @@ class App:
         w, h = self._size
         y = TOP_H + self._header_h
         self.stage.coords(self._body_win, CONTENT_X, y)
-        self.stage.itemconfigure(self._body_win, width=max(w - CONTENT_X - RIGHT_PAD + 8, 100),
+        self.stage.itemconfigure(self._body_win, width=max(w - CONTENT_X - RIGHT_PAD, 100),
                                  height=max(h - y - 14, 100))
 
     # ---- navegação ----
@@ -604,6 +604,36 @@ class App:
         if dialogs.TransactionDialog(self, transaction=row).wait():
             self.after_change()
             self.toast(t("toast.transaction_updated"), "success")
+
+    def delete_transaction(self, row):
+        """Exclui com confirmação (pergunta sobre parcelas) e oferece desfazer."""
+        from backend.utils.formatters import money
+        whole = False
+        if row["installment_group"]:
+            text = (f"“{row['description']}” é uma compra parcelada em "
+                    f"{row['installment_total']} vezes. Excluir somente esta parcela?")
+            if dialogs.confirm(self, "Excluir parcela", text, "Só esta parcela", False):
+                pass
+            elif dialogs.confirm(self, "Excluir compra parcelada",
+                                 "Excluir TODAS as parcelas desta compra?", "Excluir todas"):
+                whole = True
+            else:
+                return
+        elif not dialogs.confirm(
+                self, "Excluir movimentação",
+                f"Excluir “{row['description']}” de {money(row['amount'])}? "
+                "Você poderá desfazer logo em seguida."):
+            return
+        try:
+            deleted = tx.delete_transaction(row["id"], whole_group=whole)
+        except ValueError as exc:
+            self.toast(str(exc), "error")
+            return
+        self.after_change()
+        self.undoable("Movimentação excluída.", lambda: tx.restore_transactions(deleted))
+
+    def duplicate_transaction(self, row):
+        self.new_transaction(defaults=tx.duplicate_transaction_defaults(row["id"]))
 
     def new_transfer(self):
         from backend.services import accounts
