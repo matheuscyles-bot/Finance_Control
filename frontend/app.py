@@ -20,7 +20,7 @@ from frontend.pages.accounts import AccountsPage
 from frontend.pages.budgets import BudgetsPage
 from frontend.pages.dashboard import DashboardPage
 from frontend.pages.pipeline import PipelinePage
-from frontend.pages.recurring import RecurringPage
+from frontend.pages.schedule import SchedulePage
 from frontend.pages.reports import ReportsPage
 from frontend.pages.settings import SettingsPage
 from frontend.pages.transactions import TransactionsPage
@@ -34,7 +34,6 @@ from backend.utils.i18n import t
 log = logging.getLogger("finance_control.ui")
 
 # (chave, ícone, classe) — todas menos "settings" viram abas.
-# Agenda (schedule) entra na próxima etapa do redesign.
 NAV = [
     ("dashboard", "layout-dashboard", DashboardPage),
     ("pipeline", "calendar-clock", PipelinePage),
@@ -42,7 +41,7 @@ NAV = [
     ("accounts", "wallet", AccountsPage),
     ("budgets", "target", BudgetsPage),
     ("reports", "chart-column", ReportsPage),
-    ("recurring", "repeat", RecurringPage),
+    ("schedule", "calendar-days", SchedulePage),
     ("settings", "settings", SettingsPage),
 ]
 TABS = [key for key, *_ in NAV if key != "settings"]
@@ -591,7 +590,7 @@ class App:
         link = label(body, t("notif.view_all") + "  ↗", 11, "bold", color="accent_text", bg=fill,
                      cursor="hand2")
         link.pack(fill="x", pady=(10, 0))
-        link.bind("<Button-1>", lambda e: (pop.close(), self.navigate("recurring")))
+        link.bind("<Button-1>", lambda e: (pop.close(), self.navigate("schedule")))
 
     # ---- ações compartilhadas ----
     def is_empty(self):

@@ -214,7 +214,7 @@ class PipelinePage(Page):
 
     def _menu(self, r):
         if r["source"] == "recurring":
-            return [(t("pipeline.open_recurring"), lambda: self.app.navigate("recurring"))]
+            return [(t("pipeline.open_recurring"), lambda: self.app.navigate("schedule"))]
         fresh = lambda: tx.get_transaction(r["id"])  # noqa: E731
         return [(t("common.edit"), lambda: self.app.edit_transaction(fresh())),
                 (t("common.duplicate"), lambda: self.app.duplicate_transaction(r)),

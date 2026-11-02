@@ -238,6 +238,31 @@ class UiFlowTests(unittest.TestCase):
         page._set_view("grid")
         self.app.root.update()
 
+    def test_schedule_calendar_list_and_rules(self):
+        from backend.services import accounts, categories, recurring
+        account = accounts.add_account("Conta")
+        category = categories.add_category("Contas", "expense")
+        today = date.today().isoformat()
+        recurring.add_recurring("Aluguel", "1500", "expense", category, account, "monthly", today)
+        self.app.navigate("schedule")
+        self.app.root.update()
+        page = self.app.pages["schedule"]
+        self.assertEqual(len(page.rules), 1)
+        page._pick_day(today)
+        self.assertEqual([r["date"] for r in page.items if r["date"] == today], [today])
+        self.assertEqual(len(page._visible(page._shown)), len(page._shown))
+        page._set_view("list")
+        self.app.root.update()
+        page._set_kind("income")
+        self.assertEqual(page._visible(page.items), [])
+        page._set_kind(None)
+        page.query.set("aluguel")
+        self.assertEqual(len(page._visible(page.items)), 1)
+        page.query.set("")
+        page.toggle(page.rules[0])
+        self.app.root.update()
+        self.assertFalse(recurring.list_recurring()[0]["active"])
+
 
 if __name__ == "__main__":
     unittest.main()
