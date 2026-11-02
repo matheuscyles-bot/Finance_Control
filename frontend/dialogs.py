@@ -143,9 +143,10 @@ class TransactionDialog(Dialog):
                                  self.kind, self._kind_changed)
         self.segment.pack(anchor="w", pady=(0, 12))
         locked = editing and transaction["installment_total"]
-        if locked:
-            for lbl in self.segment.items.values():
-                lbl.unbind("<Button-1>")
+        if locked:  # parcelada: o tipo não pode mudar; tira clique e setas do seletor
+            self.segment.unbind("<Button-1>")
+            self.segment.unbind("<Left>")
+            self.segment.unbind("<Right>")
 
         self.amount = self.field(
             t("common.amount"), lambda p: ttk.Entry(p, font=font(13, "bold")))
