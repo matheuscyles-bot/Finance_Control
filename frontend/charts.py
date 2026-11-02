@@ -38,13 +38,12 @@ class _Chart(tk.Canvas):
             self.draw_progress()
         self._chan.run(self, 0.0, 1.0, duration, ease, step)
 
-    def _maybe_animate(self, duration=0.9, ease="power3.inOut"):
-        if self._pending_animation and self.winfo_width() > 40:
-            self.progress = 0.0
-            self.draw_progress()
-            self._animate(duration, ease)
-            return True
-        return False
+    def replay(self):
+        """Toca a animação de entrada de novo, sem refazer os dados."""
+        self._pending_animation = True
+        self.draw()
+        
+       
 
     def draw_progress(self):
         self.draw()

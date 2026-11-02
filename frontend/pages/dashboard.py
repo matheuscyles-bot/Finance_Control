@@ -61,8 +61,11 @@ class DashboardPage(Page):
         self.app.navigate(next(k for k in keys if k in known))
     
     def on_show(self):
-        # Sempre refaz ao abrir: os gráficos e contadores animam de novo.
-        self.refresh()
+        was_dirty = self.dirty
+        super().on_show()
+        if not was_dirty:
+            for chart in getattr(self, "_charts", []):
+                chart.replay()
     # ---------------------------------------------------------------- dados
     def refresh(self):
         super().refresh()
@@ -152,6 +155,7 @@ class DashboardPage(Page):
         chart.pack(fill="both", expand=True, pady=(10, 0))
         chart.set_data([formatters.month_label(m["month"], short=True) for m in series], values,
                        target or None)
+        self._charts = [chart]
         return p
 
     def _top(self, month, s):
