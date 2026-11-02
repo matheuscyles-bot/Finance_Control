@@ -2,19 +2,51 @@
 Cada assunto é um painel; idioma e aparência ficam lado a lado."""
 
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import filedialog
 
 from backend import config
 import database
 from backend.services import backup, categories
 from frontend import dialogs
 from frontend.pages.base import Page
-from frontend.theme import c, font
+from frontend.theme import c, font, mix
 from frontend.ui import PillSelect, Panel
 from frontend.widgets import Button, ScrollFrame, Segmented, label
 from backend.utils import formatters
 from backend.utils import i18n
 from backend.utils.i18n import category_label, t
+
+
+class _CategoryList(tk.Frame):
+    """Lista de categorias: uma linha por item, clicável; ``selection()``
+    devolve o id da linha escolhida, como o Treeview que substitui."""
+
+    def __init__(self, parent, bg):
+        super().__init__(parent, bg=bg)
+        self.base = bg
+        self._rows = {}
+        self._selected = None
+
+    def add(self, iid, text):
+        row = tk.Frame(self, bg=self.base, cursor="hand2")
+        row.pack(fill="x")
+        name = tk.Label(row, text=text, bg=self.base, fg=c("text"), font=font(12), anchor="w",
+                        padx=12, pady=8, cursor="hand2")
+        name.pack(fill="x")
+        for w in (row, name):
+            w.bind("<Button-1>", lambda e, i=iid: self.select(i))
+        self._rows[iid] = (row, name)
+
+    def select(self, iid):
+        if self._selected in self._rows:
+            for w in self._rows[self._selected]:
+                w.configure(bg=self.base)
+        self._selected = iid
+        for w in self._rows[iid]:
+            w.configure(bg=mix(self.base, c("text"), 0.08))
+
+    def selection(self):
+        return (self._selected,) if self._selected in self._rows else ()
 
 
 def _size(n):
@@ -80,11 +112,10 @@ class SettingsPage(Page):
             box = tk.Frame(cols, bg=c("surface"))
             box.pack(side="left", fill="both", expand=True, padx=(0 if i == 0 else 12, 0))
             label(box, t(f"common.{kind}"), 11, "bold").pack(fill="x", pady=(0, 6))
-            tree = ttk.Treeview(box, columns=("name",), show="", selectmode="browse", height=7)
-            tree.column("name", width=300)
+            tree = _CategoryList(box, c("surface"))
             tree.pack(fill="x")
             for cat in categories.get_categories(kind):
-                tree.insert("", "end", iid=str(cat["id"]), values=(category_label(cat["name"]),))
+                tree.add(str(cat["id"]), category_label(cat["name"]))
             tools = tk.Frame(box, bg=c("surface"))
             tools.pack(fill="x", pady=(8, 0))
             Button(tools, t("settings.add_category"), lambda k=kind: self.add_category(k), "secondary",
