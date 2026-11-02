@@ -259,11 +259,14 @@ class App:
         s = self.stage
         s.delete("top")
         cy = TOP_H / 2
-        round_rect(s, 24, cy - 18, 60, cy + 18, 11, c("primary"), c("primary"), tags="top")
-        put_icon(s, 42, cy, "leaf", c("primary_text"), 19, tags="top")
-        s.create_text(72, cy, text=config.APP_TITLE, anchor="w", font=font(16, "semibold"),
+        # marca do app anterior: quadrado azul com "F" + "FINANCE / Control"
+        round_rect(s, 24, cy - 17, 58, cy + 17, 9, c("primary"), c("primary"), tags="top")
+        s.create_text(41, cy + 1, text="FC", font=font(14, "bold"), fill=c("primary_text"), tags="top")
+        s.create_text(70, cy - 8, text="FINANCE", anchor="w", font=font(8, "bold"),
+                      fill=c("muted"), tags="top")
+        s.create_text(70, cy + 7, text="Control", anchor="w", font=font(15, "bold"),
                       fill=c("text"), tags=("top", "brand"))
-        brand_right = 72 + measure(font(16, "semibold"), config.APP_TITLE)
+        brand_right = 70 + measure(font(15, "bold"), "Control")
 
         right_w = 40 * 3 + 20
         s.coords(self._right_win, w - RIGHT_PAD, cy)
