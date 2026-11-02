@@ -18,6 +18,8 @@ from backend.utils.formatters import money
 from backend.utils.i18n import category_label, t
 
 STAGE_KEYS = ["to_pay", "due_soon", "paid", "received"]
+FREQUENCY_KEY = {"weekly": "pipeline.every_weekly", "monthly": "pipeline.every_monthly",
+                 "yearly": "pipeline.every_yearly"}
 DATE_KEY = {"to_pay": "due_on", "due_soon": "due_on", "paid": "posted_on", "received": "received_on"}
 RISE = 12          # px de subida na entrada
 RISE_TIME = 0.45   # s
@@ -145,7 +147,7 @@ class PipelinePage(Page):
         label(b, money(sum(r["amount"] for r in rows)), 18, "medium", bg=f).pack(fill="x", pady=(6, 14))
         if not rows:
             label(b, t("pipeline.column_empty"), 11, color="muted", bg=f).pack(fill="x", pady=12)
-        for j, r in enumerate(rows):
+        for j, r in enumerate(planning.collapse_recurring(rows)):
             card = self._card(b, key, r, tone, f)
             self._rise(card, index * COLUMN_STEP + 0.05 + j * CARD_STEP,
                        lambda w, v: w.pack_configure(pady=(v, 10)))
@@ -165,6 +167,11 @@ class PipelinePage(Page):
         label(b, clip(tx.describe(r), 24), 12, "semibold", bg=f).pack(fill="x", pady=(6, 0))
         category = category_label(r["category_name"]) if r["category_name"] else t("common.no_category")
         label(b, clip(f"{category} · {r['account_name']}", 30), 10, color="muted", bg=f).pack(fill="x")
+        if r["source"] == "recurring":
+            badge = [t(FREQUENCY_KEY[r["frequency"]])]
+            if r["repeat_count"]:
+                badge.append(t("pipeline.more_later", count=r["repeat_count"]))
+            label(b, " · ".join(badge), 9, color="muted", bg=f).pack(fill="x", pady=(4, 0))
         foot = tk.Frame(b, bg=f)
         foot.pack(fill="x", pady=(12, 0))
         label(foot, money(r["amount"]), 16, "semibold",

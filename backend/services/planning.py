@@ -74,6 +74,22 @@ def _from_transaction(row):
     }
 
 
+def collapse_recurring(items):
+    """Uma linha por recorrência: a ocorrência mais próxima, com
+    ``repeat_count`` = ocorrências escondidas. Transações passam sem mudança.
+    Não altera os itens recebidos."""
+    out, first_of = [], {}
+    for item in sorted(items, key=lambda r: (r["date"], r["description"].lower())):
+        if item["source"] != "recurring":
+            out.append(item)
+        elif item["recurring_id"] in first_of:
+            first_of[item["recurring_id"]]["repeat_count"] += 1
+        else:
+            first_of[item["recurring_id"]] = dict(item, repeat_count=0)
+            out.append(first_of[item["recurring_id"]])
+    return out
+
+
 def scheduled_items(start_date, end_date, kind=None, account_id=None, include_recurring=True):
     """Lançamentos já cadastrados no período + projeção das recorrências."""
     rows = tx.list_transactions(start_date=start_date, end_date=end_date, kind=kind,

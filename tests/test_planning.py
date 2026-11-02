@@ -87,5 +87,43 @@ class SummaryTests(DbTestCase):
         self.assertEqual(series[2], (None, [0, 1000]))
 
 
+class CollapseRecurringTests(unittest.TestCase):
+    def occurrence(self, recurring_id, date, description="Academia"):
+        return {"source": "recurring", "id": None, "recurring_id": recurring_id,
+                "description": description, "amount": 100, "kind": "expense", "date": date,
+                "category_name": None, "account_name": "Conta", "account_id": 1,
+                "frequency": "weekly", "installment_no": None, "installment_total": None}
+
+    def test_weekly_rule_collapses_to_nearest_occurrence(self):
+        items = [self.occurrence(7, f"2026-11-{day:02d}") for day in (2, 9, 16, 23, 30)]
+        collapsed = planning.collapse_recurring(items)
+        self.assertEqual(len(collapsed), 1)
+        self.assertEqual(collapsed[0]["date"], "2026-11-02")
+        self.assertEqual(collapsed[0]["repeat_count"], 4)
+        self.assertEqual(collapsed[0]["frequency"], "weekly")
+        self.assertNotIn("repeat_count", items[0])
+
+    def test_single_occurrence_has_zero_repeats(self):
+        collapsed = planning.collapse_recurring([self.occurrence(7, "2026-11-02")])
+        self.assertEqual(collapsed[0]["repeat_count"], 0)
+
+    def test_transactions_pass_unchanged(self):
+        row = {"source": "transaction", "id": 3, "recurring_id": None, "description": "Mercado",
+               "amount": 50, "kind": "expense", "date": "2026-11-03", "category_name": None,
+               "account_name": "Conta", "account_id": 1, "frequency": None,
+               "installment_no": None, "installment_total": None}
+        self.assertEqual(planning.collapse_recurring([row, row]), [row, row])
+
+    def test_different_rules_are_not_mixed(self):
+        items = [self.occurrence(7, "2026-11-02"), self.occurrence(8, "2026-11-03", "Streaming"),
+                 self.occurrence(7, "2026-11-09"), self.occurrence(8, "2026-11-10", "Streaming")]
+        collapsed = planning.collapse_recurring(items)
+        self.assertEqual([(r["description"], r["repeat_count"]) for r in collapsed],
+                         [("Academia", 1), ("Streaming", 1)])
+
+    def test_empty_list_returns_empty_list(self):
+        self.assertEqual(planning.collapse_recurring([]), [])
+
+
 if __name__ == "__main__":
     unittest.main()
