@@ -19,6 +19,10 @@ from frontend.theme import c, font, mix
 from frontend.widgets import bg_of, linespace, measure
 from backend.utils import formatters
 
+# Animação de entrada dos gráficos. Desligada: era o maior custo ao trocar de aba.
+# Para voltar, troque por True.
+ANIMATE_CHARTS = False
+
 
 class _Chart(tk.Canvas):
     def __init__(self, parent, height=220, width=None, bg=None):
@@ -37,6 +41,14 @@ class _Chart(tk.Canvas):
             self.progress = v
             self.draw_progress()
         self._chan.run(self, 0.0, 1.0, duration, ease, step)
+
+    def _maybe_animate(self, duration=0.9, ease="power3.inOut"):
+        if ANIMATE_CHARTS and self._pending_animation and self.winfo_width() > 40:
+            self.progress = 0.0
+            self.draw_progress()
+            self._animate(duration, ease)
+            return True
+        return False
 
     def replay(self):
         """Toca a animação de entrada de novo, sem refazer os dados."""
