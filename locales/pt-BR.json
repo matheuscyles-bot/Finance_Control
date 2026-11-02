@@ -500,5 +500,6 @@
   "error.category_in_use": "Essa categoria tem {count} registro(s) associado(s). Escolha outra categoria para receber esses dados.",
   "error.category_target_invalid": "Escolha uma categoria de destino válida.",
   "error.category_target_kind": "A categoria de destino precisa ser do mesmo tipo.",
-  "error.category_budget_conflict": "Já existe um orçamento na categoria de destino para um ou mais meses. Ajuste esses orçamentos antes de mover a categoria."
+  "error.category_budget_conflict": "Já existe um orçamento na categoria de destino para um ou mais meses. Ajuste esses orçamentos antes de mover a categoria.",
+  "common.default_account": "Conta principal"
 }

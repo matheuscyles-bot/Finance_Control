@@ -500,5 +500,6 @@
   "error.category_in_use": "This category has {count} linked record(s). Choose another category to receive them.",
   "error.category_target_invalid": "Choose a valid target category.",
   "error.category_target_kind": "The target category must be of the same type.",
-  "error.category_budget_conflict": "The target category already has a budget for one or more months. Adjust those budgets before moving the category."
+  "error.category_budget_conflict": "The target category already has a budget for one or more months. Adjust those budgets before moving the category.",
+  "common.default_account": "Main account"
 }

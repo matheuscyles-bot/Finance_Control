@@ -124,7 +124,8 @@ class AccountTests(DbTestCase):
         totals = tx.get_totals("2026-10-01", "2026-10-31")
         self.assertEqual((totals["income"], totals["expense"]), (100000, 0))
         by_name = {a["name"]: a for a in accounts.list_accounts(today="2026-10-31")}
-        self.assertEqual(by_name["Conta principal"]["balance"], 70000)
+        default = accounts.get_account(accounts.get_default_account_id(), today="2026-10-31")
+        self.assertEqual(by_name[default["name"]]["balance"], 70000)
         self.assertEqual(by_name["Poupança"]["balance"], 35000)
         self.assertEqual(accounts.total_balance("2026-10-31"), 105000)  # soma preservada
         rep = reports.category_report("2026-10-01", "2026-10-31", "expense")

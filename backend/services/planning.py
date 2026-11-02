@@ -10,6 +10,8 @@ Transferências nunca contam como receita ou despesa.
 
 from datetime import date, datetime, timedelta
 
+from backend.utils.i18n import t
+
 from database import fetch_all
 from backend.services import recurring as recurring_service
 from backend.services import transactions as tx
@@ -206,7 +208,7 @@ def category_by_month(first_month, months, kind="expense", top=3, account_id=Non
     rows = fetch_all(
         f"""
         SELECT substr(t.transaction_date, 1, 7) AS month,
-               COALESCE(c.name, 'Sem categoria') AS category_name, SUM(t.amount) AS total
+               c.name AS category_name, SUM(t.amount) AS total
         FROM transactions t LEFT JOIN categories c ON c.id = t.category_id
         WHERE t.kind = ? AND t.transaction_date BETWEEN ? AND ?{clause}
         GROUP BY month, t.category_id
@@ -215,7 +217,8 @@ def category_by_month(first_month, months, kind="expense", top=3, account_id=Non
     )
     totals = {}
     for r in rows:
-        totals[r["category_name"]] = totals.get(r["category_name"], 0) + r["total"]
+        name = r["category_name"] or t("common.uncategorized")
+        totals[name] = totals.get(name, 0) + r["total"]
     ranked = sorted(totals, key=lambda name: (-totals[name], name.lower()))
     leaders = ranked[:top]
     index = {m: i for i, m in enumerate(month_keys)}

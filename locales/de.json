@@ -500,5 +500,6 @@
   "error.category_in_use": "Diese Kategorie hat {count} verknüpfte Einträge. Wähle eine andere Kategorie, um sie zu übernehmen.",
   "error.category_target_invalid": "Wähle eine gültige Zielkategorie.",
   "error.category_target_kind": "Die Zielkategorie muss vom selben Typ sein.",
-  "error.category_budget_conflict": "Die Zielkategorie hat bereits ein Budget für einen oder mehrere Monate. Passe diese Budgets an, bevor du die Kategorie verschiebst."
+  "error.category_budget_conflict": "Die Zielkategorie hat bereits ein Budget für einen oder mehrere Monate. Passe diese Budgets an, bevor du die Kategorie verschiebst.",
+  "common.default_account": "Hauptkonto"
 }

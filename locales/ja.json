@@ -500,5 +500,6 @@
   "error.category_in_use": "このカテゴリには {count} 件の記録があります。別のカテゴリを選んで移してください。",
   "error.category_target_invalid": "有効な移動先カテゴリを選んでください。",
   "error.category_target_kind": "移動先のカテゴリは同じ種類である必要があります。",
-  "error.category_budget_conflict": "移動先のカテゴリには一部の月にすでに予算があります。カテゴリを移す前に予算を調整してください。"
+  "error.category_budget_conflict": "移動先のカテゴリには一部の月にすでに予算があります。カテゴリを移す前に予算を調整してください。",
+  "common.default_account": "メイン口座"
 }

@@ -15,12 +15,12 @@ from pathlib import Path
 
 from backend.config import (
     BACKUP_KEEP,
-    DEFAULT_ACCOUNT_NAME,
     DEFAULT_CATEGORIES,
     DEFAULT_CURRENCY,
     DEFAULT_THEME,
     LEGACY_CATEGORY_RENAMES,
 )
+from backend.utils.i18n import t
 from backend.utils.text import normalize_text
 
 log = logging.getLogger("finance_control.database")
@@ -252,7 +252,7 @@ def _migration_2_accounts(conn):
         )
         """,
         "INSERT INTO accounts (name, type, opening_balance) VALUES "
-        f"('{DEFAULT_ACCOUNT_NAME}', 'checking', 0)",
+        f"('{t('common.default_account')}', 'checking', 0)",
         """
         CREATE TABLE transactions_new (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

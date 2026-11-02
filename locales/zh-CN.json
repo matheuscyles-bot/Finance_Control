@@ -500,5 +500,6 @@
   "error.category_in_use": "此分类关联了 {count} 条记录。请选择其他分类来接收这些数据。",
   "error.category_target_invalid": "请选择有效的目标分类。",
   "error.category_target_kind": "目标分类必须是相同类型。",
-  "error.category_budget_conflict": "目标分类在一个或多个月份已有预算。请先调整这些预算再移动分类。"
+  "error.category_budget_conflict": "目标分类在一个或多个月份已有预算。请先调整这些预算再移动分类。",
+  "common.default_account": "主账户"
 }

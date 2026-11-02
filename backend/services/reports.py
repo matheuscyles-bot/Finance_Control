@@ -22,7 +22,7 @@ def category_report(start_date, end_date, kind="expense", account_id=None):
     rows = fetch_all(
         f"""
         SELECT t.category_id AS category_id,
-               COALESCE(c.name, 'Sem categoria') AS category_name,
+               c.name AS category_name,
                SUM(t.amount) AS total, COUNT(*) AS count
         FROM transactions t LEFT JOIN categories c ON c.id = t.category_id
         WHERE t.kind = ? AND t.transaction_date BETWEEN ? AND ?{account_clause}
@@ -35,7 +35,7 @@ def category_report(start_date, end_date, kind="expense", account_id=None):
     return [
         {
             "category_id": r["category_id"],
-            "category_name": r["category_name"],
+            "category_name": r["category_name"] or t("common.uncategorized"),
             "total": r["total"],
             "count": r["count"],
             "share": (r["total"] / grand) if grand else 0.0,

@@ -7,6 +7,7 @@ from logging.handlers import RotatingFileHandler
 from tkinter import messagebox
 
 from backend import config
+from backend.utils import i18n
 import database
 
 
@@ -68,6 +69,10 @@ def main():
             logging.getLogger("finance_control").info("Banco anterior copiado para a pasta do usuário")
     except Exception as exc:
         logging.getLogger("finance_control").warning("Não foi possível copiar o banco anterior: %s", type(exc).__name__)
+    try:
+        i18n.configure(database.DATA_DIR, database.BASE_DIR)
+    except i18n.LocaleConfigError:
+        pass
     try:
         database.init_db()
     except Exception as exc:

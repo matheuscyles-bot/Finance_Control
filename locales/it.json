@@ -500,5 +500,6 @@
   "error.category_in_use": "Questa categoria ha {count} registrazione/i associata/e. Scegli un'altra categoria per riceverle.",
   "error.category_target_invalid": "Scegli una categoria di destinazione valida.",
   "error.category_target_kind": "La categoria di destinazione deve essere dello stesso tipo.",
-  "error.category_budget_conflict": "La categoria di destinazione ha già un budget per uno o più mesi. Modifica questi budget prima di spostare la categoria."
+  "error.category_budget_conflict": "La categoria di destinazione ha già un budget per uno o più mesi. Modifica questi budget prima di spostare la categoria.",
+  "common.default_account": "Conto principale"
 }
