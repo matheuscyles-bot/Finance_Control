@@ -517,5 +517,7 @@
   "transactions.sort_amount_desc": "Maior valor",
   "transactions.sort_amount_asc": "Menor valor",
   "transactions.kpi_net": "Resultado",
-  "transactions.delete_title": "Excluir movimentação"
+  "transactions.delete_title": "Excluir movimentação",
+  "budgets.remove_title": "Remover orçamento",
+  "budgets.spent_of": "{spent} de {budget}"
 }

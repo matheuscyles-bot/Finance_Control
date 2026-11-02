@@ -517,5 +517,7 @@
   "transactions.sort_amount_desc": "Сначала крупные",
   "transactions.sort_amount_asc": "Сначала мелкие",
   "transactions.kpi_net": "Итог",
-  "transactions.delete_title": "Удалить операцию"
+  "transactions.delete_title": "Удалить операцию",
+  "budgets.remove_title": "Удалить бюджет",
+  "budgets.spent_of": "{spent} из {budget}"
 }

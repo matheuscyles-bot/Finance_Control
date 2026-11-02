@@ -517,5 +517,7 @@
   "transactions.sort_amount_desc": "金额从高到低",
   "transactions.sort_amount_asc": "金额从低到高",
   "transactions.kpi_net": "结余",
-  "transactions.delete_title": "删除交易"
+  "transactions.delete_title": "删除交易",
+  "budgets.remove_title": "移除预算",
+  "budgets.spent_of": "{spent} / {budget}"
 }

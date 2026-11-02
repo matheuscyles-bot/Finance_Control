@@ -517,5 +517,7 @@
   "transactions.sort_amount_desc": "金額の高い順",
   "transactions.sort_amount_asc": "金額の低い順",
   "transactions.kpi_net": "収支",
-  "transactions.delete_title": "取引を削除"
+  "transactions.delete_title": "取引を削除",
+  "budgets.remove_title": "予算を削除",
+  "budgets.spent_of": "{spent} / {budget}"
 }

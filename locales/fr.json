@@ -517,5 +517,7 @@
   "transactions.sort_amount_desc": "Montant le plus élevé",
   "transactions.sort_amount_asc": "Montant le plus bas",
   "transactions.kpi_net": "Résultat",
-  "transactions.delete_title": "Supprimer l'opération"
+  "transactions.delete_title": "Supprimer l'opération",
+  "budgets.remove_title": "Supprimer le budget",
+  "budgets.spent_of": "{spent} sur {budget}"
 }

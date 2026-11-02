@@ -517,5 +517,7 @@
   "transactions.sort_amount_desc": "Importo maggiore",
   "transactions.sort_amount_asc": "Importo minore",
   "transactions.kpi_net": "Risultato",
-  "transactions.delete_title": "Elimina movimento"
+  "transactions.delete_title": "Elimina movimento",
+  "budgets.remove_title": "Rimuovi budget",
+  "budgets.spent_of": "{spent} di {budget}"
 }
