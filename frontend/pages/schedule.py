@@ -163,7 +163,23 @@ class SchedulePage(Page):
         self.calendar_canvas = tk.Canvas(row, bg=c("bg"), highlightthickness=0, bd=0, height=HEAD_H)
         self.calendar_canvas.pack(side="left", fill="both", expand=True)
         self.calendar_canvas.bind("<Button-1>", self._click)
-        self.calendar_canvas.bind("<Configure>", lambda e: self._draw_grid())
+        self._grid_job = None
+        self._grid_size = None
+        self.calendar_canvas.bind("<Configure>", self._on_grid_configure)
+
+    def _on_grid_configure(self, e):
+        # Agrupa rajadas de resize e ignora eventos sem mudança de tamanho.
+        if (e.width, e.height) == self._grid_size:
+            return
+        if self._grid_job is not None:
+            self.after_cancel(self._grid_job)
+        self._grid_job = self.after(40, self._grid_now)
+
+    def _grid_now(self):
+        self._grid_job = None
+        cv = self.calendar_canvas
+        self._grid_size = (cv.winfo_width(), cv.winfo_height())
+        self._draw_grid()
 
     def _draw_grid(self):
         cv = self.calendar_canvas
