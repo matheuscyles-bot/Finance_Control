@@ -230,11 +230,8 @@ class App:
                 w, h = config.WINDOW_WIDTH, config.WINDOW_HEIGHT
         resized = (w, h) != self._size
         self._size = (w, h)
-        if self.backdrop.render(w, h) or resized:
-            self._bg_photo = self.backdrop.crop(0, 0, w, h, stage)
-            stage.delete("backdrop")
-            stage.create_image(0, 0, image=self._bg_photo, anchor="nw", tags="backdrop")
-            stage.tag_lower("backdrop")
+        if resized:  # fundo liso: o degradê em imagem custava caro a cada quadro de animação
+            stage.configure(bg=c("bg"))
         self._draw_topbar(w)
         self._draw_rail(h)
         self._draw_header()
@@ -347,7 +344,6 @@ class App:
         glass = mix(self._sample(x1 + RAIL_W / 2, top + 60), c("text"), 0.05)
         round_rect(s, x1, top, x2, bottom, RAIL_W / 2, glass, mix(glass, c("text"), 0.07), tags="rail")
         s.tag_lower("rail")
-        s.tag_raise("rail", "backdrop")
         s.coords(self._rail_win, x1 + RAIL_W / 2, top + 10)
         self.rail.configure(bg=glass)
         for child in self.rail.winfo_children():
