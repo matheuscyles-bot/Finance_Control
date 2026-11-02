@@ -14,6 +14,19 @@ Personal finance control for the desktop (Python + Tkinter + SQLite). It works 1
 - **Backup**: automatic (1 per day + 1 before each database update), manual, copy and restore.
 - Dark theme as the default in new installations (an existing preference is kept), optional light theme, currencies £ € $ R$, interface in 9 languages (pt-BR, en, es, fr, it, de, ru, zh-CN, ja), and shortcuts (⌘N new transaction, ⌘F search, ⌘1…7 screens, ⌘, settings).
 
+## Screenshots
+Captured with sample data (the default interface language is Portuguese).
+
+| Overview | Due dates |
+|---|---|
+| ![Overview](assets/screenshots/dashboard.png) | ![Due dates](assets/screenshots/pipeline.png) |
+| **Transactions** | **Accounts** |
+| ![Transactions](assets/screenshots/transactions.png) | ![Accounts](assets/screenshots/accounts.png) |
+| **Budgets** | **Reports** |
+| ![Budgets](assets/screenshots/budgets.png) | ![Reports](assets/screenshots/reports.png) |
+| **Schedule** | **Settings** |
+| ![Schedule](assets/screenshots/schedule.png) | ![Settings](assets/screenshots/settings.png) |
+
 ## Install on a Mac (without VS Code)
 1. Install **Python 3.12** from <https://www.python.org/downloads/macos/> (once; the Python that comes with macOS has an old Tk and does not work).
 2. **Double-click** `Criar_App_Mac.command` (first time: right-click → Open → Open). It runs the tests, builds `Finance Control.app` and `dist/FinanceControl.dmg`, installs it in Applications, creates a Desktop shortcut and opens the app. It needs internet only to download PyInstaller.
