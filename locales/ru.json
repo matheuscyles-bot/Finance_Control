@@ -507,7 +507,7 @@
   "validation.label_account_name": "Название счёта",
   "validation.label_category_name": "Название категории",
   "validation.field_invalid": "{label}: недопустимое значение.",
-  "validation.field_required": "{label}: поле не может быть пустым.",
+  "validation.field_required": "{label}: обязательное поле.",
   "validation.field_too_long": "{label}: не больше {limit} символов.",
   "validation.notes_too_long": "Заметки не должны превышать {limit} символов.",
   "validation.kind_invalid": "Недопустимый тип операции.",
