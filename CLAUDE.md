@@ -38,3 +38,4 @@
 
 ## PENDENCIAS 
 - Pendência i18n: frontend/dialogs.py, erros de backend/services/* e "Sem categoria" (reports.py, planning.py) estão fixos em português.
+- Pendência i18n (só depois do redesign): frontend/dialogs.py, erros de backend/services/*, "Sem categoria" (reports.py, planning.py) e o nome da conta padrão "Conta principal" (backend/config.py) estão fixos em português.
