@@ -75,6 +75,8 @@ def _decimal_from_text(text):
             raise ValueError(t("validation.amount_help"))
         if not right.isdigit():
             raise ValueError(t("validation.amount_help"))
+        if len(right) > 2:
+            raise ValueError(t("validation.decimal_places"))
         normalized = "".join(groups) + "." + right
     elif last_dot != -1 or last_comma != -1:
         sep = "." if last_dot != -1 else ","
