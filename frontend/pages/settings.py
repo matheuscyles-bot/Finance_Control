@@ -1,4 +1,5 @@
-"""Configurações: aparência, moeda, categorias e backups."""
+"""Configurações: idioma, aparência e moeda, categorias, backups e sobre o app.
+Cada assunto é um painel; idioma e aparência ficam lado a lado."""
 
 import tkinter as tk
 from tkinter import filedialog, ttk
@@ -9,7 +10,8 @@ from backend.services import backup, categories
 from frontend import dialogs
 from frontend.pages.base import Page
 from frontend.theme import c, font
-from frontend.widgets import Button, Card, ChoiceCombo, ScrollFrame, Segmented, label
+from frontend.ui import PillSelect, Panel
+from frontend.widgets import Button, ScrollFrame, Segmented, label
 from backend.utils import formatters
 from backend.utils import i18n
 from backend.utils.i18n import category_label, t
@@ -23,81 +25,61 @@ class SettingsPage(Page):
     title_key = "nav.settings"
 
     def build(self):
-        self.scroll = ScrollFrame(self)
+        self.scroll = ScrollFrame(self, bg=c("bg"))
         self.scroll.pack(fill="both", expand=True)
         self.content = tk.Frame(self.scroll.inner, bg=c("bg"))
-        self.content.pack(fill="both", expand=True, padx=32, pady=(0, 28))
+        self.content.pack(fill="both", expand=True)
+        self.content.grid_columnconfigure(0, weight=1, uniform="settings")
+        self.content.grid_columnconfigure(1, weight=1, uniform="settings")
 
-    def _card(self, title, hint=None):
-        card = Card(self.content)
-        card.pack(fill="x", pady=(0, 14))
-        label(card.body, title, 13, "bold").pack(fill="x")
-        if hint:
-            label(card.body, hint, 11, color="muted", wraplength=760, justify="left").pack(fill="x", pady=(2, 8))
-        return card.body
+    def _panel(self, title, hint, row, col=0, span=1):
+        panel = Panel(self.content, title=title, subtitle=hint, hover=False)
+        panel.grid(row=row, column=col, columnspan=span, sticky="nsew",
+                   padx=(0 if col == 0 else 7, 0 if col == 1 or span == 2 else 7), pady=(0, 14))
+        return panel.content
 
     def refresh(self):
         super().refresh()
         for w in self.content.winfo_children():
             w.destroy()
-        self._language()
-        self._appearance()
-        self._categories()
-        self._backups()
-        self._about()
+        self._language(0, 0)
+        self._appearance(0, 1)
+        self._categories(1, 0, span=2)
+        self._backups(2, 0, span=2)
+        self._about(3, 0, span=2)
 
-    def _language(self):
-        body = self._card(t("settings.language.title"), t("settings.language.hint"))
-        row = tk.Frame(body, bg=c("surface"))
-        row.pack(fill="x", pady=(8, 0))
-        label(row, t("settings.language.label"), 11, "bold", "muted").pack(
-            side="left", padx=(0, 16)
-        )
-        self.language = ChoiceCombo(
-            row,
-            [(code, t(f"language.{code}")) for code in i18n.SUPPORTED_LOCALES],
-            width=24,
-        )
+    def _language(self, row, col):
+        body = self._panel(t("settings.language.title"), t("settings.language.hint"), row, col)
+        row_frame = tk.Frame(body, bg=c("surface"))
+        row_frame.pack(fill="x", pady=(8, 0))
+        self.language = PillSelect(row_frame, [(code, t(f"language.{code}")) for code in i18n.SUPPORTED_LOCALES],
+                                   icon_name="layout-grid", bg=c("surface"))
         self.language.set_id(i18n.get_locale())
         self.language.pack(side="left")
-        self.language.bind(
-            "<<ComboboxSelected>>",
-            lambda _event: self.app.set_language(self.language.get_id()),
-        )
+        self.language.bind("<<ComboboxSelected>>",
+                           lambda _event: self.app.set_language(self.language.get_id()))
 
     # ---- aparência e moeda ----
-    def _appearance(self):
-        body = self._card(t("settings.appearance_currency"))
-        row = tk.Frame(body, bg=c("surface"))
-        row.pack(fill="x", pady=(8, 0))
-        left = tk.Frame(row, bg=c("surface"))
-        left.pack(side="left", padx=(0, 40))
-        label(left, t("settings.theme"), 11, "bold", "muted").pack(fill="x", pady=(0, 4))
+    def _appearance(self, row, col):
+        body = self._panel(t("settings.appearance_currency"), None, row, col)
         from frontend import theme
-        Segmented(left, list(config.THEMES.items()), theme.theme_name(),
-                  lambda k: self.app.set_theme(k)).pack(anchor="w")
-        right = tk.Frame(row, bg=c("surface"))
-        right.pack(side="left")
-        label(right, t("settings.currency_symbol"), 11, "bold", "muted").pack(fill="x", pady=(0, 4))
-        Segmented(right, [(s, s) for s in config.CURRENCY_OPTIONS], formatters.get_currency_symbol(),
-                  lambda k: self.app.set_currency(k)).pack(anchor="w")
-        label(body, t("settings.currency_hint"),
-              11, color="muted").pack(fill="x", pady=(8, 0))
+        label(body, t("settings.theme"), 11, "bold", "muted").pack(fill="x", pady=(8, 4))
+        Segmented(body, list(config.THEMES.items()), theme.theme_name(),
+                  lambda k: self.app.set_theme(k), bg=c("surface")).pack(anchor="w")
+        label(body, t("settings.currency_symbol"), 11, "bold", "muted").pack(fill="x", pady=(14, 4))
+        Segmented(body, [(s, s) for s in config.CURRENCY_OPTIONS], formatters.get_currency_symbol(),
+                  lambda k: self.app.set_currency(k), bg=c("surface")).pack(anchor="w")
+        label(body, t("settings.currency_hint"), 11, color="muted").pack(fill="x", pady=(8, 0))
 
     # ---- categorias ----
-    def _categories(self):
-        body = self._card(
-            t("settings.categories"),
-            t("settings.category_delete_hint")
-        )
+    def _categories(self, row, col, span=1):
+        body = self._panel(t("settings.categories"), t("settings.category_delete_hint"), row, col, span)
         cols = tk.Frame(body, bg=c("surface"))
-        cols.pack(fill="x")
-        for i, (kind, title) in enumerate((("expense", "Despesas"), ("income", "Receitas"))):
+        cols.pack(fill="x", pady=(8, 0))
+        for i, kind in enumerate(("expense", "income")):
             box = tk.Frame(cols, bg=c("surface"))
             box.pack(side="left", fill="both", expand=True, padx=(0 if i == 0 else 12, 0))
-            top = tk.Frame(box, bg=c("surface"))
-            top.pack(fill="x", pady=(0, 6))
-            label(top, t(f"common.{kind}"), 11, "bold").pack(side="left")
+            label(box, t(f"common.{kind}"), 11, "bold").pack(fill="x", pady=(0, 6))
             tree = ttk.Treeview(box, columns=("name",), show="", selectmode="browse", height=7)
             tree.column("name", width=300)
             tree.pack(fill="x")
@@ -105,9 +87,12 @@ class SettingsPage(Page):
                 tree.insert("", "end", iid=str(cat["id"]), values=(category_label(cat["name"]),))
             tools = tk.Frame(box, bg=c("surface"))
             tools.pack(fill="x", pady=(8, 0))
-            Button(tools, t("settings.add_category"), lambda k=kind: self.add_category(k), "secondary", pad=(10, 4)).pack(side="left")
-            Button(tools, t("settings.rename_category"), lambda t=tree: self.rename_category(t), "secondary", pad=(10, 4)).pack(side="left", padx=6)
-            Button(tools, t("common.delete"), lambda t=tree: self.delete_category(t), "secondary", pad=(10, 4)).pack(side="left")
+            Button(tools, t("settings.add_category"), lambda k=kind: self.add_category(k), "secondary",
+                   pad=(10, 4)).pack(side="left")
+            Button(tools, t("settings.rename_category"), lambda tr=tree: self.rename_category(tr), "secondary",
+                   pad=(10, 4)).pack(side="left", padx=6)
+            Button(tools, t("common.delete"), lambda tr=tree: self.delete_category(tr), "secondary",
+                   pad=(10, 4)).pack(side="left")
 
     def add_category(self, kind):
         name = dialogs.prompt_text(
@@ -155,13 +140,14 @@ class SettingsPage(Page):
         self.guarded(run)
 
     # ---- backups ----
-    def _backups(self):
-        body = self._card(t("settings.backup_restore"), t("settings.backup_hint"))
-        row = tk.Frame(body, bg=c("surface"))
-        row.pack(fill="x", pady=(0, 8))
-        Button(row, t("settings.backup_now"), self.make_backup, "primary", icon="download").pack(side="left")
-        Button(row, t("settings.save_copy"), self.save_copy, "secondary").pack(side="left", padx=8)
-        Button(row, t("settings.restore_file"), lambda: self.restore(None), "secondary", icon="upload").pack(side="left")
+    def _backups(self, row, col, span=1):
+        body = self._panel(t("settings.backup_restore"), t("settings.backup_hint"), row, col, span)
+        buttons = tk.Frame(body, bg=c("surface"))
+        buttons.pack(fill="x", pady=(8, 8))
+        Button(buttons, t("settings.backup_now"), self.make_backup, "primary", icon="download").pack(side="left")
+        Button(buttons, t("settings.save_copy"), self.save_copy, "secondary").pack(side="left", padx=8)
+        Button(buttons, t("settings.restore_file"), lambda: self.restore(None), "secondary",
+               icon="upload").pack(side="left")
         items = backup.list_backups()
         if not items:
             label(body, t("settings.no_backups"), 11, color="muted").pack(fill="x", pady=6)
@@ -178,7 +164,8 @@ class SettingsPage(Page):
             label(body, t("settings.old_backups", count=len(items) - 6), 11, color="muted").pack(fill="x", pady=(4, 0))
 
     def make_backup(self):
-        self.guarded(lambda: (backup.manual_backup(), self.app.toast(t("toast.backup_created"), "success"), self.refresh()))
+        self.guarded(lambda: (backup.manual_backup(), self.app.toast(t("toast.backup_created"), "success"),
+                              self.refresh()))
 
     def save_copy(self):
         def run():
@@ -206,8 +193,8 @@ class SettingsPage(Page):
                 self.app.toast(t("toast.backup_restored"), "success")
         self.guarded(run)
 
-    def _about(self):
-        body = self._card(t("settings.about"))
+    def _about(self, row, col, span=1):
+        body = self._panel(t("settings.about"), None, row, col, span)
         label(body, f"{config.APP_TITLE} {config.APP_VERSION}", 11, "bold").pack(fill="x", pady=(4, 0))
         label(body, t("settings.data_path", path=database.DATA_DIR), 11, color="muted", wraplength=760,
               justify="left").pack(fill="x", pady=(2, 0))
