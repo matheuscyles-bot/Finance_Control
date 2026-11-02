@@ -1,26 +1,27 @@
-"""Relatórios: comparação de períodos e maiores categorias."""
+"""Relatórios: resultado do período com comparação ao anterior, receitas x
+despesas nos últimos meses e maiores categorias. Os KPIs ficam no cabeçalho."""
 
 import tkinter as tk
 from datetime import date, timedelta
 
 from backend.services import accounts, reports
-from frontend.charts import BarChart, ProgressBar
-from frontend.pages.base import Page, change_note, kpi_card
+from frontend.charts import GroupedBars, ProgressBar
+from frontend.pages.base import Page, change_badge, kpi, money_fmt
 from frontend.theme import c
-from frontend.widgets import (Button, Card, ChoiceCombo, DateField, EmptyState,
-                        ScrollFrame, Segmented, label)
+from frontend.ui import Panel, PillSelect
+from frontend.widgets import Button, DateField, EmptyState, ScrollFrame, Segmented, label
 from backend.utils import formatters
 from backend.utils.formatters import money
-from backend.utils.i18n import t, category_label
+from backend.utils.i18n import category_label, t
+
 
 class ReportsPage(Page):
     title_key = "nav.reports"
 
     def build(self):
         self.kind = "expense"
-        bar = Card(self, 14, 12)
-        bar.pack(fill="x", padx=32, pady=(0, 14))
-        b = bar.body
+        self.bar = tk.Frame(self, bg=c("bg"))
+        self.bar.pack(fill="x", pady=(0, 14))
         periods = [
             ("month", t("common.month_current")),
             ("last_month", t("common.month_previous")),
@@ -28,31 +29,34 @@ class ReportsPage(Page):
             ("year", t("common.year_current")),
             ("custom", t("common.custom")),
         ]
-        self.period = ChoiceCombo(b, periods, width=16)
+        self.period = PillSelect(self.bar, periods, icon_name="calendar-days", bg=c("bg"))
         self.period.set_id("month")
-        self.period.grid(row=0, column=0, padx=(0, 10))
+        self.period.pack(side="left", padx=(0, 10))
         self.period.bind("<<ComboboxSelected>>", lambda e: self._period_changed())
-        self.account = ChoiceCombo(b, [], width=18, allow_empty=t("common.all_accounts"))
-        self.account.grid(row=0, column=1, padx=(0, 10))
+        self.account = PillSelect(self.bar, [], allow_empty=t("common.all_accounts"), icon_name="wallet",
+                                  bg=c("bg"))
+        self.account.pack(side="left")
         self.account.bind("<<ComboboxSelected>>", lambda e: self.refresh())
-        self.custom = tk.Frame(b, bg=c("surface"))
-        label(self.custom, t("common.from"), 11, color="muted").pack(side="left", padx=(0, 4))
+
+        self.custom = tk.Frame(self, bg=c("bg"))
+        label(self.custom, t("common.from"), 11, color="muted", bg="bg").pack(side="left", padx=(0, 4))
         self.start = DateField(self.custom, width=10)
         self.start.pack(side="left", padx=(0, 10))
-        label(self.custom, t("common.until"), 11, color="muted").pack(side="left", padx=(0, 4))
+        label(self.custom, t("common.until"), 11, color="muted", bg="bg").pack(side="left", padx=(0, 4))
         self.end = DateField(self.custom, width=10)
-        self.end.pack(side="left", padx=(0, 10))
-        Button(self.custom, t("common.apply"), self.refresh, "secondary", pad=(10, 4)).pack(side="left")
-        self.scroll = ScrollFrame(self)
+        self.end.pack(side="left")
+        Button(self.custom, t("common.apply"), self.refresh, "secondary", pad=(10, 4)).pack(side="left", padx=10)
+
+        self.scroll = ScrollFrame(self, bg=c("bg"))
         self.scroll.pack(fill="both", expand=True)
         self.content = tk.Frame(self.scroll.inner, bg=c("bg"))
-        self.content.pack(fill="both", expand=True, padx=32, pady=(0, 28))
+        self.content.pack(fill="both", expand=True)
 
     def _period_changed(self):
         if self.period.get_id() == "custom":
-            self.custom.grid(row=1, column=0, columnspan=4, sticky="w", pady=(10, 0))
+            self.custom.pack(fill="x", pady=(0, 14), before=self.scroll)
         else:
-            self.custom.grid_forget()
+            self.custom.pack_forget()
             self.refresh()
 
     def _range(self):
@@ -83,56 +87,46 @@ class ReportsPage(Page):
         except ValueError as exc:
             self.app.toast(str(exc), "error")
             return
-        content = self.content
-        for i in range(4):
-            content.grid_columnconfigure(i, weight=1, uniform="k")
-        inc_note, inc_col = change_note(s["income_change"], True)
-        exp_note, exp_col = change_note(s["expense_change"], False)
-        saving = (t("reports.savings_rate", percent=f"{s['savings_rate'] * 100:.0f}")
-                  if s["savings_rate"] is not None else t("reports.no_income"))
-        cards = [
-            kpi_card(content, t("common.income").upper(), money(s["income"]), "income", inc_note, inc_col),
-            kpi_card(content, t("common.expense").upper(), money(s["expense"]), "expense", exp_note, exp_col),
-            kpi_card(content, t("reports.result"), money(s["net"], signed=True),
-                     "income" if s["net"] >= 0 else "expense", saving),
-            kpi_card(content, t("reports.daily_average"), money(s["daily_expense"]), "text",
-                     t("reports.transaction_count", count=s["count"])),
-        ]
-        for i, card in enumerate(cards):
-            card.grid(row=0, column=i, sticky="nsew", padx=(0 if i == 0 else 7, 0 if i == 3 else 7), pady=(0, 14))
-
+        self.publish([
+            kpi("trending-up", s["income"], t("common.income"), money_fmt(),
+                change_badge(s["income_change"], True)),
+            kpi("trending-down", s["expense"], t("common.expense"), money_fmt(),
+                change_badge(s["expense_change"], False)),
+            kpi("wallet", s["net"], t("reports.result"), money_fmt(signed=True)),
+            kpi("calendar-days", s["daily_expense"], t("reports.daily_average"), money_fmt()),
+        ])
         if s["count"] == 0:
-            empty = Card(content, 0, 0)
-            empty.grid(row=1, column=0, columnspan=4, sticky="nsew", ipady=50)
-            EmptyState(empty.body, "chart", t("reports.no_data_title"),
-                       t("reports.no_data_text")
-                       ).pack(fill="both", expand=True)
+            panel = Panel(self.content, hover=False)
+            panel.pack(fill="both", expand=True)
+            EmptyState(panel.content, "chart", t("reports.no_data_title"),
+                       t("reports.no_data_text")).pack(fill="both", expand=True)
             return
 
-        end_month = end[:7]
-        bars = Card(content)
-        bars.grid(row=1, column=0, columnspan=4, sticky="nsew", pady=(0, 14))
-        label(bars.body, t("reports.monthly_chart"), 13, "bold").pack(fill="x")
-        chart = BarChart(bars.body)
+        row = tk.Frame(self.content, bg=c("bg"))
+        row.pack(fill="both", expand=True)
+        left = Panel(row, title=t("reports.monthly_chart"), hover=False)
+        left.pack(side="left", fill="both", expand=True, padx=(0, 8))
+        chart = GroupedBars(left.content, height=300)
         chart.pack(fill="both", expand=True, pady=(8, 0))
-        chart.set_data(reports.monthly_series(end_month, 6, account_id))
+        chart.set_data(reports.monthly_series(end[:7], 6, account_id))
 
-        card = Card(content)
-        card.grid(row=2, column=0, columnspan=4, sticky="nsew")
-        head = tk.Frame(card.body, bg=c("surface"))
-        head.pack(fill="x", pady=(0, 6))
-        label(head, t("reports.categories_period"), 13, "bold").pack(side="left")
+        right = Panel(row, hover=False)
+        right.pack(side="left", fill="both", expand=True, padx=(8, 0))
+        fill = right.fill
+        head = tk.Frame(right.content, bg=fill)
+        head.pack(fill="x")
+        label(head, t("reports.categories_period"), 13, "bold", bg=fill).pack(side="left")
         Segmented(head, [("expense", t("common.expense")), ("income", t("common.income"))], self.kind,
-                  self._set_kind).pack(side="right")
+                  self._set_kind, bg=fill).pack(side="right")
         rows = reports.category_report(start, end, self.kind, account_id)
         if not rows:
-            label(card.body, t("reports.no_category_data"), 11, color="muted").pack(fill="x", pady=24)
+            label(right.content, t("reports.no_category_data"), 11, color="muted", bg=fill).pack(fill="x", pady=24)
+        tone = c("expense") if self.kind == "expense" else c("income")
         for r in rows:
-            line = tk.Frame(card.body, bg=c("surface"))
-            line.pack(fill="x", pady=(10, 0))
-            label(line, category_label(r["category_name"]), 11).pack(side="left")
-            label(line, f"{money(r['total'])}  ·  {r['share'] * 100:.0f}%".replace(".", ","), 11, "bold",
-                  anchor="e").pack(side="right")
-            bar = ProgressBar(card.body)
-            bar.pack(fill="x", pady=(4, 0))
-            bar.set(r["share"], c("expense") if self.kind == "expense" else c("income"))
+            line = tk.Frame(right.content, bg=fill)
+            line.pack(fill="x", pady=(12, 0))
+            label(line, category_label(r["category_name"]), 11, bg=fill).pack(side="left")
+            label(line, f"{money(r['total'])}  ·  {r['share'] * 100:.0f}%", 11, "bold", bg=fill).pack(side="right")
+            bar = ProgressBar(right.content)
+            bar.pack(fill="x", pady=(5, 0))
+            bar.set(r["share"], tone)
