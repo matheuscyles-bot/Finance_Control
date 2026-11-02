@@ -274,6 +274,16 @@ class ImporterTests(DbTestCase):
         self.assertEqual(rows[1][5], "1234,56")
         self.assertTrue(rows[1][2].startswith("'"))   # fórmula neutralizada
 
+    def test_import_remove_apostrofo_de_formula(self):
+        path = self.write(
+            "Data;Descrição;Valor;Observações\n"
+            "02/10/2026;'-Café;-5,00;'=nota\n"
+            "03/10/2026;Isso é d'água;-1,00;\n")
+        prep = importer.prepare_import(path, self.account)
+        self.assertEqual(prep["rows"][0]["description"], "-Café")
+        self.assertEqual(prep["rows"][0]["notes"], "=nota")
+        self.assertEqual(prep["rows"][1]["description"], "Isso é d'água")    
+
 
 class BackupMigrationTests(DbTestCase):
     def test_backup_restore(self):

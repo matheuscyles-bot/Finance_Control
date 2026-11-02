@@ -58,11 +58,11 @@ def _map_headers(header):
     return mapping
 
 
-def _parse_signed(text):
-    text = (text or "").strip()
-    negative = text.startswith("-") or (text.startswith("(") and text.endswith(")"))
-    cleaned = text.strip("()").lstrip("+-").strip()
-    return parse_amount(cleaned), negative
+def _strip_csv_guard(value):
+    """Desfaz o apóstrofo que a exportação coloca antes de =, +, - e @."""
+    if len(value) > 1 and value[0] == "'" and value[1] in "=+-@":
+        return value[1:]
+    return value
 
 
 def _key(date_iso, kind, amount, description, account_id):
@@ -102,8 +102,8 @@ def prepare_import(path, account_id):
 
         def cell(field):
             index = mapping.get(field)
-            return row[index].strip() if index is not None and index < len(row) else ""
-
+            raw = row[index].strip() if index is not None and index < len(row) else ""
+            return _strip_csv_guard(raw)
         try:
             date_iso = parse_date(cell("date"))
             description = validate_description(cell("description"))
