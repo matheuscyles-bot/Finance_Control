@@ -58,3 +58,10 @@ Structure: `backend/` (app entry point, settings, business rules and utilities) 
 - Amounts are stored as integers (cents). Input accepts `25,50`, `25.50`, `1.234,56` and `1,234.56`; it rejects zero, negatives, letters and more than 2 decimal places.
 - Dates are entered as DD/MM/YYYY on screen and stored in ISO format. Future entries do not change today's balance (they appear as "planned").
 - Deleting a category in use requires choosing another one to receive its entries; an account with history can only be archived (and only with a zero balance).
+
+## Credits and licenses
+- Source code: [MIT License](LICENSE).
+- Manrope font by The Manrope Project Authors, [SIL Open Font License 1.1](assets/fonts/Manrope-OFL.txt).
+- Lucide icons by Lucide Icons and Contributors, [ISC License](assets/fonts/Lucide-LICENSE.txt).
+
+Contributing: see [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: see [SECURITY.md](SECURITY.md).
