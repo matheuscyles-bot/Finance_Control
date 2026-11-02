@@ -72,6 +72,7 @@ class DashboardPage(Page):
         for w in self.content.winfo_children():
             w.destroy()
         self._cells, self._cols = [], 0
+        self._charts = []  # gráficos da renderização anterior já foram destruídos
         month = self._month
         data = reports.dashboard_data(month)
         s, bsum = data["summary"], data["budget_summary"]

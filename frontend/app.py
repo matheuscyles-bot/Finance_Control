@@ -160,6 +160,7 @@ class App:
         self.bell = CircleButton(self.right, "bell", self.show_notifications, size=40,
                                  tooltip=t("top.notifications"))
         self.bell.pack(side="left", padx=(0, 10))
+        self._update_bell()  # o badge precisa aparecer também na abertura e após trocar tema/idioma
         name = self._user_name()
         self.avatar = tk.Canvas(self.right, width=40, height=40, highlightthickness=0, bd=0,
                                 cursor="hand2", bg=c("bg"))
@@ -742,11 +743,18 @@ class App:
     # ---- atalhos ----
     def _bind_shortcuts(self):
         r = self.root
-        r.bind_all(f"<{MOD}-n>", lambda e: self.new_transaction())
-        r.bind_all(f"<{MOD}-f>", lambda e: self._focus_search())
-        r.bind_all(f"<{MOD}-comma>", lambda e: self.navigate("settings"))
+        r.bind_all(f"<{MOD}-n>", self._shortcut(lambda: self.new_transaction()))
+        r.bind_all(f"<{MOD}-f>", self._shortcut(self._focus_search))
+        r.bind_all(f"<{MOD}-comma>", self._shortcut(lambda: self.navigate("settings")))
         for i, key in enumerate(TABS, 1):
-            r.bind_all(f"<{MOD}-Key-{i}>", lambda e, k=key: self.navigate(k))
+            r.bind_all(f"<{MOD}-Key-{i}>", self._shortcut(lambda k=key: self.navigate(k)))
+
+    def _shortcut(self, action):
+        """Atalho que não dispara enquanto um diálogo modal está aberto."""
+        def handler(_event=None):
+            if self.root.grab_current() is None:
+                action()
+        return handler
 
     def _focus_search(self):
         self.navigate("transactions")
