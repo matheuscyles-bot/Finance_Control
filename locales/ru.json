@@ -511,5 +511,11 @@
   "validation.field_too_long": "{label}: не больше {limit} символов.",
   "validation.notes_too_long": "Заметки не должны превышать {limit} символов.",
   "validation.kind_invalid": "Недопустимый тип операции.",
-  "validation.date_range_invalid": "Дата начала не может быть позже даты окончания."
+  "validation.date_range_invalid": "Дата начала не может быть позже даты окончания.",
+  "transactions.sort_date_desc": "Сначала новые",
+  "transactions.sort_date_asc": "Сначала старые",
+  "transactions.sort_amount_desc": "Сначала крупные",
+  "transactions.sort_amount_asc": "Сначала мелкие",
+  "transactions.kpi_net": "Итог",
+  "transactions.delete_title": "Удалить операцию"
 }

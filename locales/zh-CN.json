@@ -511,5 +511,11 @@
   "validation.field_too_long": "{label}最多 {limit} 个字符。",
   "validation.notes_too_long": "备注最多 {limit} 个字符。",
   "validation.kind_invalid": "交易类型无效。",
-  "validation.date_range_invalid": "开始日期不能晚于结束日期。"
+  "validation.date_range_invalid": "开始日期不能晚于结束日期。",
+  "transactions.sort_date_desc": "最新优先",
+  "transactions.sort_date_asc": "最早优先",
+  "transactions.sort_amount_desc": "金额从高到低",
+  "transactions.sort_amount_asc": "金额从低到高",
+  "transactions.kpi_net": "结余",
+  "transactions.delete_title": "删除交易"
 }

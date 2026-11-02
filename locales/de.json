@@ -511,5 +511,11 @@
   "validation.field_too_long": "{label} darf höchstens {limit} Zeichen haben.",
   "validation.notes_too_long": "Notizen dürfen höchstens {limit} Zeichen haben.",
   "validation.kind_invalid": "Ungültiger Buchungstyp.",
-  "validation.date_range_invalid": "Das Startdatum darf nicht nach dem Enddatum liegen."
+  "validation.date_range_invalid": "Das Startdatum darf nicht nach dem Enddatum liegen.",
+  "transactions.sort_date_desc": "Neueste zuerst",
+  "transactions.sort_date_asc": "Älteste zuerst",
+  "transactions.sort_amount_desc": "Höchster Betrag",
+  "transactions.sort_amount_asc": "Niedrigster Betrag",
+  "transactions.kpi_net": "Ergebnis",
+  "transactions.delete_title": "Buchung löschen"
 }

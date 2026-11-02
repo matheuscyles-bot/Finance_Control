@@ -511,5 +511,11 @@
   "validation.field_too_long": "{label}は最大{limit}文字までです。",
   "validation.notes_too_long": "メモは最大{limit}文字までです。",
   "validation.kind_invalid": "取引の種類が無効です。",
-  "validation.date_range_invalid": "開始日は終了日より後にできません。"
+  "validation.date_range_invalid": "開始日は終了日より後にできません。",
+  "transactions.sort_date_desc": "新しい順",
+  "transactions.sort_date_asc": "古い順",
+  "transactions.sort_amount_desc": "金額の高い順",
+  "transactions.sort_amount_asc": "金額の低い順",
+  "transactions.kpi_net": "収支",
+  "transactions.delete_title": "取引を削除"
 }

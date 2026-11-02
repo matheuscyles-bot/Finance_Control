@@ -511,5 +511,11 @@
   "validation.field_too_long": "{label} must be at most {limit} characters.",
   "validation.notes_too_long": "Notes must be at most {limit} characters.",
   "validation.kind_invalid": "Invalid transaction type.",
-  "validation.date_range_invalid": "The start date can't be after the end date."
+  "validation.date_range_invalid": "The start date can't be after the end date.",
+  "transactions.sort_date_desc": "Most recent",
+  "transactions.sort_date_asc": "Oldest first",
+  "transactions.sort_amount_desc": "Highest amount",
+  "transactions.sort_amount_asc": "Lowest amount",
+  "transactions.kpi_net": "Net result",
+  "transactions.delete_title": "Delete transaction"
 }

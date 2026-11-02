@@ -610,19 +610,19 @@ class App:
         from backend.utils.formatters import money
         whole = False
         if row["installment_group"]:
-            text = (f"“{row['description']}” é uma compra parcelada em "
-                    f"{row['installment_total']} vezes. Excluir somente esta parcela?")
-            if dialogs.confirm(self, "Excluir parcela", text, "Só esta parcela", False):
+            text = t("transactions.delete_installment_prompt", description=row["description"],
+                     count=row["installment_total"])
+            if dialogs.confirm(self, t("transactions.delete_installment_title"), text,
+                               t("transactions.only_this_installment"), False):
                 pass
-            elif dialogs.confirm(self, "Excluir compra parcelada",
-                                 "Excluir TODAS as parcelas desta compra?", "Excluir todas"):
+            elif dialogs.confirm(self, t("transactions.delete_purchase_title"),
+                                 t("transactions.delete_all_installments"), t("transactions.all_installments")):
                 whole = True
             else:
                 return
         elif not dialogs.confirm(
-                self, "Excluir movimentação",
-                f"Excluir “{row['description']}” de {money(row['amount'])}? "
-                "Você poderá desfazer logo em seguida."):
+                self, t("transactions.delete_title"),
+                t("transactions.delete_prompt", description=row["description"], amount=money(row["amount"]))):
             return
         try:
             deleted = tx.delete_transaction(row["id"], whole_group=whole)
@@ -630,7 +630,7 @@ class App:
             self.toast(str(exc), "error")
             return
         self.after_change()
-        self.undoable("Movimentação excluída.", lambda: tx.restore_transactions(deleted))
+        self.undoable(t("transactions.deleted_undo"), lambda: tx.restore_transactions(deleted))
 
     def duplicate_transaction(self, row):
         self.new_transaction(defaults=tx.duplicate_transaction_defaults(row["id"]))

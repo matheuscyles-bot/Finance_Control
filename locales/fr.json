@@ -511,5 +511,11 @@
   "validation.field_too_long": "{label} doit comporter au maximum {limit} caractères.",
   "validation.notes_too_long": "Les notes doivent comporter au maximum {limit} caractères.",
   "validation.kind_invalid": "Type d'opération invalide.",
-  "validation.date_range_invalid": "La date de début ne peut pas être postérieure à la date de fin."
+  "validation.date_range_invalid": "La date de début ne peut pas être postérieure à la date de fin.",
+  "transactions.sort_date_desc": "Plus récentes",
+  "transactions.sort_date_asc": "Plus anciennes",
+  "transactions.sort_amount_desc": "Montant le plus élevé",
+  "transactions.sort_amount_asc": "Montant le plus bas",
+  "transactions.kpi_net": "Résultat",
+  "transactions.delete_title": "Supprimer l'opération"
 }

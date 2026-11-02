@@ -511,5 +511,11 @@
   "validation.field_too_long": "{label} debe tener como máximo {limit} caracteres.",
   "validation.notes_too_long": "Las observaciones deben tener como máximo {limit} caracteres.",
   "validation.kind_invalid": "Tipo de movimiento no válido.",
-  "validation.date_range_invalid": "La fecha inicial no puede ser posterior a la final."
+  "validation.date_range_invalid": "La fecha inicial no puede ser posterior a la final.",
+  "transactions.sort_date_desc": "Más recientes",
+  "transactions.sort_date_asc": "Más antiguas",
+  "transactions.sort_amount_desc": "Mayor importe",
+  "transactions.sort_amount_asc": "Menor importe",
+  "transactions.kpi_net": "Resultado",
+  "transactions.delete_title": "Eliminar movimiento"
 }
