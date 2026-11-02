@@ -3,6 +3,7 @@
 from datetime import date, datetime, timedelta
 
 from database import fetch_all, fetch_one
+from backend.utils.i18n import t
 from backend.services import accounts, budgets
 from backend.utils.formatters import month_range, shift_month
 from backend.utils.validators import validate_date, validate_month
@@ -109,7 +110,7 @@ def previous_period(start_date, end_date):
     start = datetime.strptime(validate_date(start_date), "%Y-%m-%d").date()
     end = datetime.strptime(validate_date(end_date), "%Y-%m-%d").date()
     if start > end:
-        raise ValueError("A data inicial deve ser anterior à final.")
+        raise ValueError(t("error.date_range_order"))
     month = start.strftime("%Y-%m")
     if month_range(month) == (start.isoformat(), end.isoformat()):
         return month_range(shift_month(month, -1))

@@ -1,6 +1,7 @@
 """Orçamentos mensais por categoria de despesa."""
 
 from database import fetch_all, fetch_one, get_connection
+from backend.utils.i18n import t
 from backend.utils.formatters import month_range, shift_month
 from backend.utils.validators import validate_amount, validate_month
 
@@ -14,9 +15,9 @@ def save_budget(month, category_id, amount):
             "SELECT kind FROM categories WHERE id = ?", (category_id,)
         ).fetchone()
         if not category:
-            raise ValueError("Categoria não encontrada.")
+            raise ValueError(t("error.category_not_found"))
         if category["kind"] != "expense":
-            raise ValueError("Orçamentos só podem ser definidos para despesas.")
+            raise ValueError(t("error.budget_expense_only"))
         conn.execute(
             """
             INSERT INTO budgets (category_id, month, amount) VALUES (?, ?, ?)
@@ -72,7 +73,7 @@ def copy_budgets(from_month, to_month):
     from_month = validate_month(from_month)
     to_month = validate_month(to_month)
     if from_month == to_month:
-        raise ValueError("Escolha meses diferentes.")
+        raise ValueError(t("error.budget_choose_months"))
     with get_connection() as conn:
         cursor = conn.execute(
             """

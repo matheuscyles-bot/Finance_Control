@@ -6,6 +6,7 @@ from collections import Counter
 from pathlib import Path
 
 from database import fetch_all, get_connection
+from backend.utils.i18n import t
 from backend.services.categories import ensure_fallback_category
 from backend.utils.formatters import parse_date
 from backend.utils.money import minor_to_text, parse_amount
@@ -31,14 +32,14 @@ _EXPENSE = {"despesa", "expense", "saida", "debito", "debit", "d"}
 def _read_text(path):
     path = Path(path)
     if path.stat().st_size > MAX_FILE_BYTES:
-        raise ValueError("O arquivo é grande demais (limite de 10 MB).")
+        raise ValueError(t("error.import_too_large"))
     raw = path.read_bytes()
     for encoding in ("utf-8-sig", "cp1252"):
         try:
             return raw.decode(encoding)
         except UnicodeDecodeError:
             continue
-    raise ValueError("Não foi possível ler o arquivo (codificação desconhecida).")
+    raise ValueError(t("error.import_encoding"))
 
 
 def _delimiter(text):
@@ -81,24 +82,18 @@ def prepare_import(path, account_id):
     Cada linha traz ``duplicate=True`` quando já existe movimentação igual."""
     text = _read_text(path)
     if not text.strip():
-        raise ValueError("O arquivo está vazio.")
+        raise ValueError(t("error.import_empty"))
     reader = csv.reader(io.StringIO(text), delimiter=_delimiter(text))
     try:
         rows = list(reader)
     except csv.Error:
-        raise ValueError(
-            "O arquivo não parece um CSV válido (campo grande demais ou "
-            "formato inesperado)."
-        ) from None
+        raise ValueError(t("error.import_not_csv")) from None
     mapping = _map_headers(rows[0])
     missing = [f for f in ("date", "description", "amount") if f not in mapping]
     if missing:
-        raise ValueError(
-            "Não encontrei as colunas obrigatórias: Data, Descrição e Valor. "
-            "A primeira linha do arquivo deve ter os nomes das colunas."
-        )
+        raise ValueError(t("error.import_missing_columns"))
     if len(rows) - 1 > MAX_IMPORT_ROWS:
-        raise ValueError(f"O arquivo tem linhas demais (limite de {MAX_IMPORT_ROWS}).")
+        raise ValueError(t("error.import_too_many_rows", limit=MAX_IMPORT_ROWS))
 
     parsed, errors = [], []
     for line_no, row in enumerate(rows[1:], start=2):
@@ -119,7 +114,7 @@ def prepare_import(path, account_id):
             elif kind_text in _EXPENSE:
                 kind = "expense"
             elif kind_text:
-                raise ValueError("Tipo desconhecido (use Receita ou Despesa).")
+                raise ValueError(t("error.import_unknown_kind"))
             else:
                 kind = "expense" if negative else "income"
             notes = validate_notes(cell("notes"))
@@ -159,7 +154,7 @@ def commit_import(rows, account_id, skip_duplicates=True):
             "SELECT archived FROM accounts WHERE id = ?", (account_id,)
         ).fetchone()
         if not account or account["archived"]:
-            raise ValueError("Escolha uma conta ativa para importar.")
+            raise ValueError(t("error.import_pick_account"))
         by_name = {}
         for c in conn.execute("SELECT id, name, kind FROM categories"):
             by_name[(normalize_text(c["name"]), c["kind"])] = c["id"]

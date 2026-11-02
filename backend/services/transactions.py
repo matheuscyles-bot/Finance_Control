@@ -4,6 +4,7 @@ import sqlite3
 import uuid
 from datetime import date, datetime
 
+from backend.utils.i18n import t
 from backend.config import MAX_INSTALLMENTS
 from database import fetch_all, fetch_one, get_connection
 from backend.utils.formatters import add_months
@@ -51,12 +52,12 @@ def describe(row):
 
 def _check_category(conn, category_id, kind):
     if category_id is None:
-        raise ValueError("Selecione uma categoria.")
+        raise ValueError(t("error.category_required"))
     category = conn.execute(
         "SELECT id, kind FROM categories WHERE id = ?", (category_id,)
     ).fetchone()
     if not category or category["kind"] != kind:
-        raise ValueError("Selecione uma categoria válida para esse tipo.")
+        raise ValueError(t("error.category_kind_invalid"))
 
 
 def _resolve_account(conn, account_id):
@@ -65,15 +66,15 @@ def _resolve_account(conn, account_id):
             "SELECT id FROM accounts WHERE archived = 0 ORDER BY id LIMIT 1"
         ).fetchone()
         if not row:
-            raise ValueError("Cadastre uma conta antes de registrar movimentações.")
+            raise ValueError(t("error.create_account_first"))
         return row["id"]
     row = conn.execute(
         "SELECT id, archived FROM accounts WHERE id = ?", (account_id,)
     ).fetchone()
     if not row:
-        raise ValueError("Conta não encontrada.")
+        raise ValueError(t("error.account_not_found"))
     if row["archived"]:
-        raise ValueError("Essa conta está arquivada. Escolha outra conta.")
+        raise ValueError(t("error.account_archived"))
     return row["id"]
 
 
@@ -92,13 +93,11 @@ def add_transaction(description, amount, kind, category_id, transaction_date,
     try:
         installments = int(installments or 1)
     except (TypeError, ValueError) as exc:
-        raise ValueError("Número de parcelas inválido.") from exc
+        raise ValueError(t("validation.installments_invalid")) from exc
     if installments < 1 or installments > MAX_INSTALLMENTS:
-        raise ValueError(
-            f"O número de parcelas deve estar entre 1 e {MAX_INSTALLMENTS}."
-        )
+        raise ValueError(t("error.installments_range", max=MAX_INSTALLMENTS))
     if installments > 1 and kind != "expense":
-        raise ValueError("O parcelamento só pode ser usado em despesas.")
+        raise ValueError(t("error.installments_expense_only"))
 
     with get_connection() as conn:
         _check_category(conn, category_id, kind)
@@ -144,9 +143,9 @@ def update_transaction(transaction_id, description, amount, kind, category_id,
             (transaction_id,),
         ).fetchone()
         if not current:
-            raise ValueError("Movimentação não encontrada.")
+            raise ValueError(t("error.transaction_not_found"))
         if current["installment_total"] and kind != "expense":
-            raise ValueError("Uma parcela de compra parcelada é sempre uma despesa.")
+            raise ValueError(t("error.installment_is_expense"))
         _check_category(conn, category_id, kind)
         if account_id is None or account_id == current["account_id"]:
             account_id = current["account_id"]  # mantém mesmo se arquivada
@@ -174,7 +173,7 @@ def delete_transaction(transaction_id, whole_group=False):
             "SELECT * FROM transactions WHERE id = ?", (transaction_id,)
         ).fetchone()
         if not row:
-            raise ValueError("Movimentação não encontrada.")
+            raise ValueError(t("error.transaction_not_found"))
 
         if whole_group and row["installment_group"]:
             rows = conn.execute(
@@ -207,10 +206,7 @@ def restore_transactions(rows):
                     data,
                 )
     except sqlite3.IntegrityError as exc:
-        raise ValueError(
-            "Não foi possível desfazer a exclusão (a conta ou o registro "
-            "não existe mais)."
-        ) from exc
+        raise ValueError(t("error.undo_failed_missing")) from exc
 
 
 def _build_filters(start_date=None, end_date=None, kind=None, category_id=None,
@@ -260,7 +256,7 @@ def list_transactions(start_date=None, end_date=None, kind=None,
         limit = int(limit)
         offset = int(offset or 0)
         if limit < 0 or offset < 0:
-            raise ValueError("Limite e deslocamento não podem ser negativos.")
+            raise ValueError(t("error.limit_negative"))
         query += " LIMIT ? OFFSET ?"
         params += [limit, offset]
     return fetch_all(query, params)
@@ -307,7 +303,7 @@ def duplicate_transaction_defaults(transaction_id):
     """Dados para pré-preencher uma nova movimentação a partir de outra."""
     row = get_transaction(transaction_id)
     if not row:
-        raise ValueError("Movimentação não encontrada.")
+        raise ValueError(t("error.transaction_not_found"))
     data = dict(row)
     data["transaction_date"] = date.today().isoformat()
     return data

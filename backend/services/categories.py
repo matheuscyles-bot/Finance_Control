@@ -2,6 +2,7 @@
 
 import sqlite3
 
+from backend.utils.i18n import t
 from backend.config import FALLBACK_CATEGORY
 from database import fetch_all, fetch_one, get_connection
 from backend.utils.validators import validate_kind, validate_name
@@ -36,14 +37,14 @@ def add_category(name, kind):
     validate_kind(kind)
     with get_connection() as conn:
         if _name_taken(conn, name, kind):
-            raise ValueError("Já existe uma categoria com esse nome.")
+            raise ValueError(t("error.category_name_taken"))
         try:
             return conn.execute(
                 "INSERT INTO categories (name, kind) VALUES (?, ?)",
                 (name, kind),
             ).lastrowid
         except sqlite3.IntegrityError as exc:
-            raise ValueError("Já existe uma categoria com esse nome.") from exc
+            raise ValueError(t("error.category_name_taken")) from exc
 
 
 def rename_category(category_id, name):
@@ -53,9 +54,9 @@ def rename_category(category_id, name):
             "SELECT kind FROM categories WHERE id = ?", (category_id,)
         ).fetchone()
         if not row:
-            raise ValueError("Categoria não encontrada.")
+            raise ValueError(t("error.category_not_found"))
         if _name_taken(conn, name, row["kind"], ignore_id=category_id):
-            raise ValueError("Já existe uma categoria com esse nome.")
+            raise ValueError(t("error.category_name_taken"))
         conn.execute(
             "UPDATE categories SET name = ? WHERE id = ?", (name, category_id)
         )
@@ -85,7 +86,7 @@ def delete_category(category_id, move_to=None):
             "SELECT * FROM categories WHERE id = ?", (category_id,)
         ).fetchone()
         if not category:
-            raise ValueError("Categoria não encontrada.")
+            raise ValueError(t("error.category_not_found"))
 
         in_use = conn.execute(
             "SELECT (SELECT COUNT(*) FROM transactions WHERE category_id = ?) "
@@ -96,19 +97,14 @@ def delete_category(category_id, move_to=None):
 
         if in_use:
             if move_to is None:
-                raise ValueError(
-                    f"Essa categoria tem {in_use} registro(s) associado(s). "
-                    "Escolha outra categoria para receber esses dados."
-                )
+                raise ValueError(t("error.category_in_use", count=in_use))
             target = conn.execute(
                 "SELECT * FROM categories WHERE id = ?", (move_to,)
             ).fetchone()
             if not target or target["id"] == category_id:
-                raise ValueError("Escolha uma categoria de destino válida.")
+                raise ValueError(t("error.category_target_invalid"))
             if target["kind"] != category["kind"]:
-                raise ValueError(
-                    "A categoria de destino precisa ser do mesmo tipo."
-                )
+                raise ValueError(t("error.category_target_kind"))
             budget_conflict = conn.execute(
                 "SELECT 1 FROM budgets source "
                 "JOIN budgets target ON target.month = source.month "
@@ -117,11 +113,7 @@ def delete_category(category_id, move_to=None):
                 (category_id, move_to),
             ).fetchone()
             if budget_conflict:
-                raise ValueError(
-                    "Já existe um orçamento na categoria de destino para "
-                    "um ou mais meses. Ajuste esses orçamentos antes de "
-                    "mover a categoria."
-                )
+                raise ValueError(t("error.category_budget_conflict"))
             conn.execute(
                 "UPDATE transactions SET category_id = ? WHERE category_id = ?",
                 (move_to, category_id),
