@@ -1,47 +1,47 @@
 # Finance Control 2.0
 
-Controle financeiro pessoal para desktop (Python + Tkinter + SQLite). Funciona 100% offline:
-**nenhum dado financeiro sai do seu computador** e o app não usa internet.
+Personal finance control for the desktop (Python + Tkinter + SQLite). It works 100% offline:
+**no financial data leaves your computer**, and the app does not use the internet.
 
-## O que o app faz
-- **Visão geral** (painel): receitas do mês (com comparação ao mês anterior), saldo total de hoje, % do orçamento do mês, gráfico de despesas (6 ou 12 meses), maiores gastos do mês, meta do mês, despesas por categoria e próximos vencimentos.
-- **Vencimentos**: contas do mês com coluna "Lançado" para as despesas já lançadas.
-- **Movimentações**: cadastro rápido, busca (sem diferenciar acentos), filtros (período, tipo, categoria, conta), ordenação, duplicar, editar, excluir **com desfazer**, parcelamento (valor dividido sem perder centavos), exportar/importar CSV.
-- **Contas e transferências**: várias contas (corrente, poupança, dinheiro, cartão) com saldo próprio. Transferências movem dinheiro entre contas e **não contam como receita nem despesa**.
-- **Orçamentos** mensais por categoria, com copiar do mês anterior.
-- **Relatórios**: qualquer período, por conta, comparação com o período anterior e ranking de categorias.
-- **Agenda**: recorrências (aluguel, assinaturas, salário… semanal/mensal/anual), criadas automaticamente sem duplicar, com pausar, editar e excluir. Substitui a antiga tela Recorrências.
-- **Backup**: automático (1 por dia + 1 antes de cada atualização do banco), manual, cópia e restauração.
-- Tema escuro premium como padrão em instalações novas (a preferência existente é preservada), tema claro opcional, moedas £ € $ R$, interface em 9 idiomas (pt-BR, en, es, fr, it, de, ru, zh-CN, ja), atalhos (⌘N nova movimentação, ⌘F buscar, ⌘1…7 telas, ⌘, configurações).
+## What the app does
+- **Overview** (dashboard): income for the month (with comparison to the previous month), total balance today, % of the monthly budget used, expense chart (6 or 12 months), biggest expenses of the month, monthly goal, expenses by category, and upcoming bills.
+- **Due dates**: the month's bills, with a "Posted" column for expenses already posted.
+- **Transactions**: quick entry, search (accent-insensitive), filters (period, type, category, account), sorting, duplicate, edit, delete **with undo**, installments (the amount is split without losing cents), CSV export and import.
+- **Accounts and transfers**: several accounts (checking, savings, cash, credit card), each with its own balance. Transfers move money between accounts and **are not counted as income or expense**.
+- **Budgets**: monthly budgets by category, with copy from the previous month.
+- **Reports**: any period, per account, comparison with the previous period, and category ranking.
+- **Schedule**: recurring items (rent, subscriptions, salary… weekly/monthly/yearly), created automatically without duplicates, with pause, edit and delete. It replaces the old Recurring screen.
+- **Backup**: automatic (1 per day + 1 before each database update), manual, copy and restore.
+- Dark theme as the default in new installations (an existing preference is kept), optional light theme, currencies £ € $ R$, interface in 9 languages (pt-BR, en, es, fr, it, de, ru, zh-CN, ja), and shortcuts (⌘N new transaction, ⌘F search, ⌘1…7 screens, ⌘, settings).
 
-## Instalar no Mac (sem VS Code)
-1. Instale o **Python 3.12** de <https://www.python.org/downloads/macos/> (uma única vez; o Python que já vem no Mac tem um Tk antigo e não serve).
-2. Dê **duplo clique** em `Criar_App_Mac.command` (primeira vez: botão direito → Abrir → Abrir). Ele roda os testes, gera `Finance Control.app` e `dist/FinanceControl.dmg`, instala em Aplicativos, cria um atalho na Mesa e abre o app. Precisa de internet só para baixar o PyInstaller.
-3. Pronto: abra pelo ícone. Para só testar sem instalar, use `Abrir_Finance_Control.command`.
+## Install on a Mac (without VS Code)
+1. Install **Python 3.12** from <https://www.python.org/downloads/macos/> (once; the Python that comes with macOS has an old Tk and does not work).
+2. **Double-click** `Criar_App_Mac.command` (first time: right-click → Open → Open). It runs the tests, builds `Finance Control.app` and `dist/FinanceControl.dmg`, installs it in Applications, creates a Desktop shortcut and opens the app. It needs internet only to download PyInstaller.
+3. Done: open the app from its icon. To run it without installing, use `Abrir_Finance_Control.command`.
 
-Alternativa sem usar o Terminal do Mac: `.github/workflows/build-macos.yml` gera o `.dmg` na nuvem do GitHub (Actions → Build macOS app → Run workflow).
+As an alternative without using the Mac Terminal, `.github/workflows/build-macos.yml` builds the `.dmg` in GitHub's cloud (Actions → Build macOS app → Run workflow).
 
-> Status honesto: o código e os testes foram verificados em Linux. A geração do `.app/.dmg` **não pôde ser testada** fora de um Mac; veja `CHANGELOG.md`.
+> Honest status: the code and tests were verified on Linux. The `.app/.dmg` build **could not be tested** outside a Mac; see `CHANGELOG.md`.
 
-## Onde ficam seus dados
-- macOS: `~/Library/Application Support/Finance Control/` (banco `finance_control.db`, `backups/`, `logs/`).
-- Mudar o local: variável de ambiente `FINANCE_CONTROL_DATA`.
-- Na primeira abertura, se existir `data/finance_control.db` na pasta do projeto e ainda não houver banco no local acima, ele é **copiado** (o original nunca é alterado) e atualizado com backup automático.
-- Trazer dados de outro arquivo: Configurações → Backup → *Restaurar de arquivo…* (o app guarda uma cópia do estado atual antes).
+## Where your data is stored
+- macOS: `~/Library/Application Support/Finance Control/` (database `finance_control.db`, `backups/`, `logs/`).
+- To change the location: set the `FINANCE_CONTROL_DATA` environment variable.
+- On first launch, if `data/finance_control.db` exists in the project folder and there is no database in the location above yet, it is **copied** (the original is never changed) and updated with an automatic backup.
+- To bring data from another file: Settings → Backup → *Restore from file…* (the app keeps a copy of the current state first).
 
-## Atualizar sem perder dados
-Gere o app novamente (`Criar_App_Mac.command`). Os dados ficam fora do app e nunca são apagados na atualização. Mudanças de estrutura do banco são migrações versionadas, sempre precedidas de backup.
+## Update without losing data
+Rebuild the app (`Criar_App_Mac.command`). Data is stored outside the app and is never deleted on update. Database structure changes are versioned migrations, always preceded by a backup.
 
-## Desenvolvimento
+## Development
 ```
-python3.12 -m backend.main               # executar
-python3.12 -m unittest discover -s tests -t .   # testes automatizados
+python3.12 -m backend.main               # run
+python3.12 -m unittest discover -s tests -t .   # automated tests
 ```
-Os testes de interface precisam de tela (em servidor: `xvfb-run -a ...`); sem tela eles são pulados. Dependência de execução: Pillow (`requirements.txt`); `requirements-build.txt` é usado apenas para empacotar.
+UI tests need a display (on a server: `xvfb-run -a ...`); without one they are skipped. The runtime dependency is Pillow (`requirements.txt`); `requirements-build.txt` is used only for packaging.
 
-Estrutura: `backend/` (entrada do app, configurações, regras de negócio e utilitários) · `frontend/` (telas) · `database/` (SQLite, migrações e backup) · `tests/` · `packaging/` · `locales/` (textos dos 9 idiomas).
+Structure: `backend/` (app entry point, settings, business rules and utilities) · `frontend/` (screens) · `database/` (SQLite, migrations and backup) · `tests/` · `packaging/` · `locales/` (texts in the 9 languages).
 
-## Regras importantes
-- Valores guardados como inteiros (centavos); entrada aceita `25,50`, `25.50`, `1.234,56`, `1,234.56`; rejeita zero, negativos, letras e mais de 2 casas.
-- Datas em DD/MM/AAAA na tela e ISO no banco. Lançamentos futuros não alteram o saldo de hoje (aparecem como "previsto").
-- Excluir categoria em uso exige escolher outra para receber os lançamentos; conta com histórico só pode ser arquivada (e só com saldo zero).
+## Important rules
+- Amounts are stored as integers (cents). Input accepts `25,50`, `25.50`, `1.234,56` and `1,234.56`; it rejects zero, negatives, letters and more than 2 decimal places.
+- Dates are entered as DD/MM/YYYY on screen and stored in ISO format. Future entries do not change today's balance (they appear as "planned").
+- Deleting a category in use requires choosing another one to receive its entries; an account with history can only be archived (and only with a zero balance).
