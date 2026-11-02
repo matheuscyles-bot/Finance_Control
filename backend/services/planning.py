@@ -228,8 +228,9 @@ def category_by_month(first_month, months, kind="expense", top=3, account_id=Non
         i = index.get(r["month"])
         if i is None:
             continue
-        if r["category_name"] in series:
-            series[r["category_name"]][i] += r["total"]
+        name = r["category_name"] or t("common.uncategorized")
+        if name in series:
+            series[name][i] += r["total"]
         else:
             rest[i] += r["total"]
     result = [(name, series[name]) for name in leaders]
