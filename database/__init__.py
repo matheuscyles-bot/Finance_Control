@@ -483,7 +483,7 @@ def restore_backup(path):
         raise DatabaseError("O arquivo de backup não foi encontrado.")
 
     try:
-        source = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        source = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
         source.row_factory = sqlite3.Row
         try:
             if source.execute("PRAGMA quick_check").fetchone()[0] != "ok":

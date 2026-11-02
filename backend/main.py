@@ -43,7 +43,7 @@ def adopt_legacy_db():
         return False
     import sqlite3
     database.DATA_DIR.mkdir(parents=True, exist_ok=True)
-    source = sqlite3.connect(f"file:{legacy}?mode=ro", uri=True)
+    source = sqlite3.connect(legacy.resolve().as_uri() + "?mode=ro", uri=True)
     try:
         target = sqlite3.connect(database.DB_PATH)
         try:

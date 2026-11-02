@@ -170,7 +170,12 @@ class CircleButton(tk.Canvas):
 
 def popup_menu(widget, items):
     """Menu nativo sob o widget. items: [(rótulo, função) | None (separador)]."""
-    menu = tk.Menu(widget, tearoff=0)
+    # um único menu por widget: reusar evita criar um widget filho a cada clique
+    menu = getattr(widget, "_fc_popup_menu", None)
+    if menu is None:
+        menu = tk.Menu(widget, tearoff=0)
+        widget._fc_popup_menu = menu
+    menu.delete(0, "end")
     for item in items:
         if item is None:
             menu.add_separator()
