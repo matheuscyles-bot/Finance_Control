@@ -12,8 +12,8 @@ from frontend.charts import ProgressBar
 from frontend.pages.base import Page, kpi, money_fmt, relative_day
 from frontend.pages.dashboard import clip
 from frontend.theme import c, font
-from frontend.ui import Chip, CircleButton, PillSelect, SearchField, Star, avatar_color, initials, popup_menu
-from frontend.widgets import Button, Card, EmptyState, ScrollFrame, Segmented, SortableTree, label
+from frontend.ui import Chip, CircleButton, PillSelect, SearchField, Star, Tooltip, avatar_color, initials, popup_menu
+from frontend.widgets import Button, Card, EmptyState, ScrollFrame, Segmented, SortableTree, label, linespace, measure
 from backend.utils import formatters
 from backend.utils.formatters import money
 from backend.utils.i18n import t
@@ -25,6 +25,16 @@ RISE_TIME = 0.45   # s
 CARD_STEP = 0.04   # atraso entre cards
 CARD_MIN = 262     # largura mínima de um card (px); cabem até 4 por linha
 MAX_COLS = 4
+
+
+def fit_text(text, spec, limit):
+    """Corta o texto com "…" até caber em limit px, medido com a fonte spec."""
+    if measure(spec, text) <= limit:
+        return text
+    cut = text
+    while cut and measure(spec, cut + "…") > limit:
+        cut = cut[:-1]
+    return cut.rstrip() + "…"
 
 
 class AccountsPage(Page):
@@ -40,23 +50,27 @@ class AccountsPage(Page):
 
         self.bar = tk.Frame(self, bg=c("bg"))
         self.bar.pack(fill="x", pady=(0, 16))
-        Button(self.bar, t("common.new_account"), self.new_account, "primary",
+        self.bar.grid_columnconfigure(1, weight=1)
+        self.search = SearchField(self.bar, variable=self.query, placeholder=t("accounts.search"),
+                                  width=240, bg=c("bg"))
+        self.chip_row = tk.Frame(self.bar, bg=c("bg"))
+        # ordenação, modo e exportar ficam juntos à direita (linha própria quando não cabem)
+        self.tools = tk.Frame(self.bar, bg=c("bg"))
+        Button(self.tools, t("common.new_account"), self.new_account, "primary",
                icon="plus", pad=(14, 8)).pack(side="right")
-        Button(self.bar, t("common.export"), self.export_csv, "secondary",
+        Button(self.tools, t("common.export"), self.export_csv, "secondary",
                icon="download", pad=(14, 8)).pack(side="right", padx=(0, 10))
-        Segmented(self.bar, [("grid", t("accounts.view_grid")), ("table", t("accounts.view_table"))],
+        Segmented(self.tools, [("grid", t("accounts.view_grid")), ("table", t("accounts.view_table"))],
                   self.view, self._set_view, bg=c("bg"), size=11).pack(side="right", padx=(0, 10))
-        self.sort = PillSelect(self.bar, items=[("last", t("accounts.sort_last")),
-                                                ("balance", t("accounts.sort_balance")),
-                                                ("name", t("accounts.sort_name"))],
+        self.sort = PillSelect(self.tools, items=[("last", t("accounts.sort_last")),
+                                                  ("balance", t("accounts.sort_balance")),
+                                                  ("name", t("accounts.sort_name"))],
                                bg=c("bg"), max_width=200)
         self.sort.set_id(self.sort_key)
         self.sort.pack(side="right", padx=(0, 10))
         self.sort.bind("<<ComboboxSelected>>", lambda e: self._pick_sort(self.sort.get_id()))
-        SearchField(self.bar, variable=self.query, placeholder=t("accounts.search"), width=240,
-                    bg=c("bg")).pack(side="left")
-        self.chip_row = tk.Frame(self.bar, bg=c("bg"))
-        self.chip_row.pack(side="left", fill="x", expand=True, padx=(14, 0))
+        self._bar_wide = None
+        self.bar.bind("<Configure>", lambda e: self._layout_bar())
 
         self.body = tk.Frame(self, bg=c("bg"))
         self.body.pack(fill="both", expand=True)
@@ -114,6 +128,24 @@ class AccountsPage(Page):
         for kind, text in options:
             Chip(self.chip_row, text, active=self.kind == kind,
                  command=lambda k=kind: self._pick_kind(k), bg=c("bg")).pack(side="left", padx=(0, 8))
+        self._layout_bar()
+
+    def _layout_bar(self):
+        """Uma linha se busca + chips + ferramentas couberem na largura; senão, duas linhas."""
+        if not self.bar.winfo_exists():
+            return
+        self.bar.update_idletasks()  # chips recém-criados precisam de tamanho medido
+        need = self.search.winfo_reqwidth() + 14 + self.chip_row.winfo_reqwidth() + self.tools.winfo_reqwidth()
+        wide = self.bar.winfo_width() >= need
+        if wide == self._bar_wide:
+            return
+        self._bar_wide = wide
+        self.search.grid_configure(row=0, column=0, sticky="w")
+        self.chip_row.grid_configure(row=0, column=1, sticky="ew", padx=(14, 0))
+        if wide:
+            self.tools.grid_configure(row=0, column=2, columnspan=1, sticky="e", padx=0, pady=0)
+        else:
+            self.tools.grid_configure(row=1, column=0, columnspan=2, sticky="e", padx=0, pady=(10, 0))
 
     # ---------------------------------------------------------------- controles
     def _pick_kind(self, kind):
@@ -183,8 +215,15 @@ class AccountsPage(Page):
         avatar.create_text(22, 22, text=initials(a["name"]), fill=c("bg"), font=font(13, "bold"))
         avatar.pack(side="left")
         Star(top, filled=main, size=18, bg=f).pack(side="right", anchor="n")
-        label(b, clip(a["name"], 24), 14, "semibold", "muted" if archived else "text",
-              bg=f).pack(fill="x", pady=(12, 0))
+        # a caixa não propaga largura: um nome longo não alarga a célula da grade
+        name_font = font(14, "semibold")
+        name_box = tk.Frame(b, bg=f, height=linespace(name_font))
+        name_box.pack(fill="x", pady=(12, 0))
+        name_box.pack_propagate(False)
+        name = label(name_box, a["name"], 14, "semibold", "muted" if archived else "text", bg=f)
+        name.pack(fill="x")
+        Tooltip(name, a["name"])
+        name_box.bind("<Configure>", lambda e: name.configure(text=fit_text(a["name"], name_font, e.width)))
         if archived:
             label(b, t("common.archived"), 10, color="muted", bg=f).pack(fill="x")
 
