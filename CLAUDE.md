@@ -20,8 +20,9 @@
 
 ## Redesign (branch `redesign-dashboard`)
 - Pronto: tokens, fontes, animações, componentes, gráficos, casca, serviço `planning`.
-- Páginas: 1 de 8 redesenhadas (dashboard ✓). As demais mostram o conteúdo antigo dentro da casca nova.
-- Ordem: 1 dashboard (Visão geral) ✓ · 2 pipeline (Vencimentos, nova) ← próxima · 3 accounts · 4 schedule (Agenda, substitui recurring) · 5 transactions · 6 reports · 7 budgets · 8 settings.
+- Páginas: 2 de 8 redesenhadas (dashboard ✓, pipeline ✓). As demais mostram o conteúdo antigo dentro da casca nova.
+- Ordem: 1 dashboard (Visão geral) ✓ · 2 pipeline (Vencimentos) ✓ · 3 accounts ← próxima · 4 schedule (Agenda, substitui recurring) · 5 transactions · 6 reports · 7 budgets · 8 settings.
+- Vencimentos: a coluna "Lançado" (chave interna `paid` do bills_board) substitui "Pago"; despesas já lançadas no mês, até hoje, caem nela.
 - Ao trocar `NAV` em app.py: abas = todas menos settings; atalhos ⌘1…⌘7.
 
 ## Regras
@@ -36,5 +37,4 @@
 - Tkinter: nunca use `self._w` em widgets (nome interno do Tk). Chaves novas de idioma vão nos 9 catálogos.
 
 ## PENDENCIAS 
-- Pendência (planning.bills_board): despesa de hoje cai em "pago" (o futuro começa amanhã) e não há status de pago. Decidir na página Vencimentos: renomear coluna ou criar campo paid (migração v4).
 - Pendência i18n: frontend/dialogs.py, erros de backend/services/* e "Sem categoria" (reports.py, planning.py) estão fixos em português.

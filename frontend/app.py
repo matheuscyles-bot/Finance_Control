@@ -19,6 +19,7 @@ from frontend.draw import Backdrop, round_rect
 from frontend.pages.accounts import AccountsPage
 from frontend.pages.budgets import BudgetsPage
 from frontend.pages.dashboard import DashboardPage
+from frontend.pages.pipeline import PipelinePage
 from frontend.pages.recurring import RecurringPage
 from frontend.pages.reports import ReportsPage
 from frontend.pages.settings import SettingsPage
@@ -33,9 +34,10 @@ from backend.utils.i18n import t
 log = logging.getLogger("finance_control.ui")
 
 # (chave, ícone, classe) — todas menos "settings" viram abas.
-# Pipeline (vencimentos) e Agenda entram nas próximas etapas do redesign.
+# Agenda (schedule) entra na próxima etapa do redesign.
 NAV = [
     ("dashboard", "layout-dashboard", DashboardPage),
+    ("pipeline", "calendar-clock", PipelinePage),
     ("transactions", "list", TransactionsPage),
     ("accounts", "wallet", AccountsPage),
     ("budgets", "target", BudgetsPage),

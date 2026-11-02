@@ -50,6 +50,28 @@ class UiFlowTests(unittest.TestCase):
             self.app.root.update()
         self.assertTrue(self.app.is_empty())
 
+    def test_pipeline_board_and_list(self):
+        from datetime import timedelta
+        from backend.services import accounts, categories
+        from backend.services import transactions as tx
+        from frontend.pages.pipeline import STAGE_KEYS
+        account = accounts.add_account("Conta")
+        category = categories.add_category("Contas", "expense")
+        tx.add_transaction("Luz", "80", "expense", category, (date.today() + timedelta(days=3)).isoformat(),
+                           account_id=account)
+        self.app.navigate("pipeline")
+        page = self.app.pages["pipeline"]
+        self.assertEqual(len(page.groups["due_soon"]), 1)
+        self.assertEqual(page.kpis[1]["value"], 8000)
+        page.query.set("luz")
+        self.assertEqual(len(page._visible()), 1)
+        page.query.set("zzz")
+        self.assertEqual(page._visible(), [])
+        page.query.set("")
+        page._set_view("list")
+        self.assertEqual(len(page.table.tree.get_children()), 1)
+        self.assertEqual(sorted(page.groups), sorted(STAGE_KEYS))
+
     def test_transaction_flow(self):
         from backend.services import transactions as tx
         d = self.dialogs.TransactionDialog(self.app)
