@@ -209,6 +209,35 @@ class UiFlowTests(unittest.TestCase):
         self.assertEqual(self.app.root.grab_current(), dialog)
         dialog.close()
 
+    def test_accounts_grid_table_filters_and_share(self):
+        from backend.services import accounts
+        checking = accounts.add_account("Nubank", "checking", "1000")  # a conta padrão também existe
+        accounts.add_account("Reserva", "savings", "500")
+        accounts.add_account("Carteira", "cash")
+        total = accounts.total_balance()
+        self.app.navigate("accounts")
+        self.app.root.update()
+        page = self.app.pages["accounts"]
+        self.assertEqual(page.kpis[0]["value"], len(accounts.list_accounts()))
+        self.assertEqual(page.kpis[1]["value"], total)
+        nubank = next(a for a in page.rows if a["id"] == checking)
+        self.assertAlmostEqual(page._share(nubank), nubank["balance"] / total)
+        page.query.set("res")
+        self.assertEqual([a["name"] for a in page._visible()], ["Reserva"])
+        page.query.set("")
+        page._pick_kind("cash")
+        self.assertEqual([a["name"] for a in page._visible()], ["Carteira"])
+        page._pick_kind(None)
+        page._set_view("table")
+        self.app.root.update()
+        self.assertEqual(len(page.accounts_table.tree.get_children()), len(accounts.list_accounts()))
+        page._sort("balance", True)
+        self.assertEqual(page.accounts_table.tree.get_children()[0], str(checking))
+        page.total = 0
+        self.assertEqual(page._share(page.rows[0]), 0.0)
+        page._set_view("grid")
+        self.app.root.update()
+
 
 if __name__ == "__main__":
     unittest.main()
