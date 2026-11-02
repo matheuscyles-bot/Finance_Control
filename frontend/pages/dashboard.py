@@ -59,7 +59,10 @@ class DashboardPage(Page):
         from frontend.app import NAV
         known = [k for k, *_ in NAV]
         self.app.navigate(next(k for k in keys if k in known))
-
+    
+    def on_show(self):
+        # Sempre refaz ao abrir: os gráficos e contadores animam de novo.
+        self.refresh()
     # ---------------------------------------------------------------- dados
     def refresh(self):
         super().refresh()
