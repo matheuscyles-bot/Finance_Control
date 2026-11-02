@@ -141,10 +141,10 @@ class PipelinePage(Page):
         dot.create_oval(1, 1, 9, 9, fill=c(dot_name), outline=c(dot_name))
         dot.pack(side="left")
         label(head, t(f"pipeline.col_{key}"), 12, "semibold", bg=f).pack(side="left", padx=(8, 0))
-        label(head, str(len(rows)), 10, "semibold", color="muted", bg=f).pack(side="right")
+        label(head, str(len(rows)), 11, "semibold", color="muted", bg=f).pack(side="right")
         label(b, money(sum(r["amount"] for r in rows)), 18, "medium", bg=f).pack(fill="x", pady=(6, 14))
         if not rows:
-            label(b, t("pipeline.column_empty"), 10, color="muted", bg=f).pack(fill="x", pady=12)
+            label(b, t("pipeline.column_empty"), 11, color="muted", bg=f).pack(fill="x", pady=12)
         for j, r in enumerate(rows):
             card = self._card(b, key, r, tone, f)
             self._rise(card, index * COLUMN_STEP + 0.05 + j * CARD_STEP,
@@ -158,13 +158,13 @@ class PipelinePage(Page):
         head = tk.Frame(b, bg=f)
         head.pack(fill="x")
         label(head, t(f"pipeline.{DATE_KEY[key]}", date=formatters.format_date_short(r["date"])),
-              9, "semibold", color="muted", bg=f).pack(side="left")
+              10, "semibold", color="muted", bg=f).pack(side="left")
         more = CircleButton(head, "ellipsis", None, size=24, kind="plain", bg=f, icon_size=13)
         more.command = lambda r=r, m=more: popup_menu(m, self._menu(r))
         more.pack(side="right")
         label(b, clip(tx.describe(r), 24), 12, "semibold", bg=f).pack(fill="x", pady=(6, 0))
         category = category_label(r["category_name"]) if r["category_name"] else t("common.no_category")
-        label(b, clip(f"{category} · {r['account_name']}", 30), 9, color="muted", bg=f).pack(fill="x")
+        label(b, clip(f"{category} · {r['account_name']}", 30), 10, color="muted", bg=f).pack(fill="x")
         foot = tk.Frame(b, bg=f)
         foot.pack(fill="x", pady=(12, 0))
         label(foot, money(r["amount"]), 16, "semibold",
@@ -172,7 +172,7 @@ class PipelinePage(Page):
         if r["recurring_id"]:
             Icon(foot, "repeat", c("muted"), f, size=14).pack(side="right", anchor="s")
         if r["installment_total"]:
-            label(foot, f"{r['installment_no']}/{r['installment_total']}", 9, "semibold",
+            label(foot, f"{r['installment_no']}/{r['installment_total']}", 10, "semibold",
                   color="muted", bg=f).pack(side="right", anchor="s", padx=(0, 8))
         return card
 

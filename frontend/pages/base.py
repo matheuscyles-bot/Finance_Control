@@ -131,7 +131,7 @@ class MonthBar(tk.Frame):
 def kpi_card(parent, title, value, color="text", note=None, note_color="muted"):
     from frontend.widgets import Card, label
     card = Card(parent, 20, 17)
-    label(card.body, title, 10, "semibold", "muted").pack(fill="x")
+    label(card.body, title, 11, "semibold", "muted").pack(fill="x")
     label(card.body, value, 20, "semibold", color).pack(fill="x", pady=(6, 0))
-    label(card.body, note or " ", 10, color=note_color).pack(fill="x", pady=(4, 0))
+    label(card.body, note or " ", 11, color=note_color).pack(fill="x", pady=(4, 0))
     return card

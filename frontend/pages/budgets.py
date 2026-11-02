@@ -55,7 +55,7 @@ class BudgetsPage(Page):
                 (t("budgets.available"), money(s["remaining"]), "income" if s["remaining"] >= 0 else "expense")):
             box = tk.Frame(line, bg=c("surface"))
             box.pack(side="left", padx=(0, 48))
-            label(box, title, 10, "bold", "muted").pack(fill="x")
+            label(box, title, 11, "bold", "muted").pack(fill="x")
             label(box, value, 18, "bold", color).pack(fill="x")
         if s["over"]:
             label(summary.body, t("budgets.over_limit", count=s["over"]), 11, color="expense").pack(fill="x", pady=(8, 0))
@@ -73,7 +73,7 @@ class BudgetsPage(Page):
             status = (t("budgets.over_by", amount=money(r['spent'] - r['budget'])) if over
                       else t("budgets.remaining", amount=money(r['budget'] - r['spent'])))
             label(card.body, f"{money(r['spent'])} de {money(r['budget'])}  ·  {int(ratio * 100)}%  ·  {status}",
-                  10, color="expense" if over else "muted").pack(fill="x", pady=(2, 6))
+                  11, color="expense" if over else "muted").pack(fill="x", pady=(2, 6))
             bar = ProgressBar(card.body, height=10)
             bar.pack(fill="x")
             bar.set(ratio, c("expense") if over else c("warning") if ratio > 0.8 else c("primary"))

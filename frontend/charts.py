@@ -95,7 +95,7 @@ class AreaChart(_Chart):
         w, h = self.winfo_width(), self.winfo_height()
         if w < 60 or not self.values:
             return
-        axis_font = font(9, "medium")
+        axis_font = font(10, "medium")
         peak = max(self.values + [self.target or 0, 1])
         top_value, _step = nice_ticks(peak * 1.08, 2)
         left = max(measure(axis_font, self.formatter(top_value)), 30) + 14
@@ -155,7 +155,7 @@ class AreaChart(_Chart):
         self.create_oval(x - 5, y - 5, x + 5, y + 5, fill=self.color, outline=self.bg, width=2,
                          tags="hover")
         text = f"{self.labels[i]} · {self.formatter(self.values[i])}"
-        f = font(10, "semibold")
+        f = font(11, "semibold")
         bw, bh = measure(f, text) + 20, linespace(f) + 10
         bx = min(max(x - bw / 2, 2), self.winfo_width() - bw - 2)
         by = max(y - bh - 12, 2)
@@ -197,7 +197,7 @@ class StackedBars(_Chart):
         if w < 60 or not n:
             return
         totals = [sum(s[2][i] for s in self.series) for i in range(n)]
-        axis_font = font(9, "medium")
+        axis_font = font(10, "medium")
         if self.percent:
             top_value = 1.0
             fmt = lambda v: f"{v * 100:.0f}%"
@@ -270,7 +270,7 @@ class GroupedBars(_Chart):
         n = len(self.months)
         if w < 60 or not n:
             return
-        axis_font = font(9, "medium")
+        axis_font = font(10, "medium")
         peak = max([max(m["income"], m["expense"]) for m in self.months] + [1])
         top_value, _ = nice_ticks(peak * 1.05, 2)
         left = max(measure(axis_font, formatters.money_compact(top_value)), 28) + 14
@@ -355,7 +355,7 @@ class Donut(_Chart):
         self.create_text(s / 2, s / 2 - 10, text=self.center_top, fill=c("text"),
                          font=font(int(s / 7.2), "semibold"))
         self.create_text(s / 2, s / 2 + s / 9, text=self.center_bottom, fill=c("muted"),
-                         font=font(10, "medium"), width=s - 2 * t - 16, justify="center")
+                         font=font(11, "medium"), width=s - 2 * t - 16, justify="center")
 
 
 # ----------------------------------------------------------------------
@@ -405,7 +405,7 @@ class Gauge(_Chart):
         self.create_text(s / 2, s / 2 - 6, text=self.center_top, fill=c("text"),
                          font=font(int(s / 6.5), "semibold"))
         self.create_text(s / 2, s / 2 + s / 7.5, text=self.center_bottom, fill=c("muted"),
-                         font=font(10, "medium"))
+                         font=font(11, "medium"))
 
 
 # ----------------------------------------------------------------------

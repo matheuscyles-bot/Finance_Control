@@ -79,11 +79,11 @@ class Dialog(tk.Toplevel):
     def field(self, text, builder, hint=None):
         frame = tk.Frame(self.body, bg=c("surface"))
         frame.pack(fill="x", pady=(0, SPACING["md"]))
-        label(frame, text, 10, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(frame, text, 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         widget = builder(frame)
         widget.pack(fill="x", anchor="w")
         if hint:
-            label(frame, hint, 9, color="muted").pack(fill="x", pady=(2, 0))
+            label(frame, hint, 10, color="muted").pack(fill="x", pady=(2, 0))
         return widget
 
     def submit(self):
@@ -160,11 +160,11 @@ class TransactionDialog(Dialog):
         left.pack(side="left", fill="x", expand=True, padx=(0, 8))
         right = tk.Frame(row, bg=c("surface"))
         right.pack(side="left", fill="x", expand=True)
-        label(left, "Categoria", 10, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(left, "Categoria", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.installments = None
         self.category = ChoiceCombo(left, [], width=20)
         self.category.pack(fill="x")
-        label(right, "Conta", 10, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(right, "Conta", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.account = ChoiceCombo(right, _account_items(source.get("account_id") if source else None), width=20)
         self.account.pack(fill="x")
         if source and source.get("account_id"):
@@ -175,13 +175,13 @@ class TransactionDialog(Dialog):
         row2.pack(fill="x", pady=(12, 0))
         dleft = tk.Frame(row2, bg=c("surface"))
         dleft.pack(side="left", padx=(0, 16))
-        label(dleft, "Data", 10, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(dleft, "Data", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.date = DateField(dleft, source.get("transaction_date") if source else None)
         self.date.pack(anchor="w")
         if not editing:
             dright = tk.Frame(row2, bg=c("surface"))
             dright.pack(side="left")
-            label(dright, "Parcelas (despesas)", 10, "bold", "muted").pack(fill="x", pady=(0, 3))
+            label(dright, "Parcelas (despesas)", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
             self.installments = ttk.Spinbox(dright, from_=1, to=config.MAX_INSTALLMENTS,
                                             width=5, font=font(11))
             self.installments.set(1)
@@ -238,7 +238,7 @@ class TransferDialog(Dialog):
         self.amount = self.field("Valor", lambda p: ttk.Entry(p, font=font(13, "bold")))
         row = tk.Frame(self.body, bg=c("surface"))
         row.pack(fill="x")
-        label(row, "Data", 10, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(row, "Data", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.date = DateField(row, transfer["transfer_date"] if transfer else None)
         self.date.pack(anchor="w")
         self.notes = self.field("Observações (opcional)", lambda p: ttk.Entry(p, font=font(11)))
@@ -325,28 +325,28 @@ class RecurringDialog(Dialog):
         a.pack(side="left", fill="x", expand=True, padx=(0, 8))
         b = tk.Frame(row, bg=c("surface"))
         b.pack(side="left", fill="x", expand=True)
-        label(a, "Categoria", 10, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(a, "Categoria", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.category = ChoiceCombo(a, [], width=20)
         self.category.pack(fill="x")
-        label(b, "Conta", 10, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(b, "Conta", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.account = ChoiceCombo(b, _account_items(rule["account_id"] if rule else None), width=20)
         self.account.pack(fill="x")
         row2 = tk.Frame(self.body, bg=c("surface"))
         row2.pack(fill="x", pady=(12, 0))
         f1 = tk.Frame(row2, bg=c("surface"))
         f1.pack(side="left", padx=(0, 12))
-        label(f1, "Frequência", 10, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(f1, "Frequência", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.frequency = ChoiceCombo(f1, list(config.FREQUENCIES.items()), width=11)
         self.frequency.pack()
         self.frequency.set_id("monthly")
         f2 = tk.Frame(row2, bg=c("surface"))
         f2.pack(side="left", padx=(0, 12))
-        label(f2, "Próxima data" if rule else "Começa em", 10, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(f2, "Próxima data" if rule else "Começa em", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.start = DateField(f2, rule["next_date"] if rule else None, width=11)
         self.start.pack()
         f3 = tk.Frame(row2, bg=c("surface"))
         f3.pack(side="left")
-        label(f3, "Termina em (opcional)", 10, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(f3, "Termina em (opcional)", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.end = DateField(
             f3, rule["end_date"] if rule and rule["end_date"] else None,
             width=11, optional=True

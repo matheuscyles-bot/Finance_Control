@@ -435,7 +435,7 @@ class WheelDatePopup(tk.Toplevel):
                  fg=c("text"), font=font(13, "bold")).pack(anchor="w")
         tk.Label(
             self.body, text=t("calendar.wheel_hint"),
-            bg=c("surface"), fg=c("muted"), font=font(9)
+            bg=c("surface"), fg=c("muted"), font=font(10)
         ).pack(anchor="w", pady=(3, 12))
 
         wheels = tk.Frame(self.body, bg=c("surface"))
@@ -449,9 +449,9 @@ class WheelDatePopup(tk.Toplevel):
             column = tk.Frame(wheels, bg=c("surface"), padx=5)
             column.pack(side="left", expand=True, fill="x")
             tk.Label(column, text=title, bg=c("surface"), fg=c("muted"),
-                     font=font(8, "bold")).pack(pady=(0, 5))
+                     font=font(10, "bold")).pack(pady=(0, 5))
             previous = tk.Label(column, width=width, bg=c("surface"),
-                                fg=c("muted"), font=font(10), pady=4)
+                                fg=c("muted"), font=font(11), pady=4)
             previous.pack()
             selected = tk.Label(
                 column, width=width, bg=c("primary_soft"), fg=c("primary"),
@@ -460,7 +460,7 @@ class WheelDatePopup(tk.Toplevel):
             )
             selected.pack()
             following = tk.Label(column, width=width, bg=c("surface"),
-                                 fg=c("muted"), font=font(10), pady=4)
+                                 fg=c("muted"), font=font(11), pady=4)
             following.pack()
             self.values[component] = (previous, selected, following)
             for widget in (column, previous, selected, following):
@@ -596,7 +596,7 @@ class DateField(tk.Frame):
         if optional:
             self._clear_label = tk.Label(
                 self, text=t("calendar.clear"), bg=bg or c("surface"), fg=c("muted"),
-                font=font(9), cursor="hand2", padx=5
+                font=font(10), cursor="hand2", padx=5
             )
             self._clear_label.pack(side="left")
             self._clear_label.bind("<Button-1>", lambda _event: self.clear())

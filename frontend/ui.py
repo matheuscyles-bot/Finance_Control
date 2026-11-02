@@ -21,7 +21,7 @@ _TIP = {"widget": None}
 def show_tip(root, text, x, y, anchor="n"):
     """Mostra a dica com o ponto de ancoragem em (x, y), coordenadas da janela."""
     hide_tip()
-    f = font(10, "medium")
+    f = font(11, "medium")
     w, h = measure(f, text) + 22, linespace(f) + 12
     if anchor == "n":
         x, y = x - w / 2, y
@@ -204,7 +204,7 @@ class Panel(Card):
                 self.title.pack(fill="x")
             if subtitle:
                 self.subtitle = tk.Label(text, text=subtitle, bg=self.fill, fg=c("muted"),
-                                         font=font(10), anchor="w", justify="left")
+                                         font=font(11), anchor="w", justify="left")
                 self.subtitle.pack(fill="x", pady=(2, 0))
             self.actions = tk.Frame(self.header, bg=self.fill)
             self.actions.pack(side="right", anchor="n")

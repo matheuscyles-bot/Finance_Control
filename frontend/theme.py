@@ -177,7 +177,7 @@ def apply(root, name):
                     foreground=p["text"], rowheight=42, borderwidth=0,
                     font=font(11), relief="flat", padding=(4, 2))
     style.configure("Treeview.Heading", background=p["surface"],
-                    foreground=p["muted"], font=font(10, "semibold"), relief="flat",
+                    foreground=p["muted"], font=font(11, "semibold"), relief="flat",
                     borderwidth=0, padding=(14, 12))
     style.map("Treeview.Heading", background=[("active", p["surface"])],
               foreground=[("active", p["text"])])

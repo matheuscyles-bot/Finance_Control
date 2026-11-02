@@ -33,7 +33,7 @@ class SettingsPage(Page):
         card.pack(fill="x", pady=(0, 14))
         label(card.body, title, 13, "bold").pack(fill="x")
         if hint:
-            label(card.body, hint, 10, color="muted", wraplength=760, justify="left").pack(fill="x", pady=(2, 8))
+            label(card.body, hint, 11, color="muted", wraplength=760, justify="left").pack(fill="x", pady=(2, 8))
         return card.body
 
     def refresh(self):
@@ -50,7 +50,7 @@ class SettingsPage(Page):
         body = self._card(t("settings.language.title"), t("settings.language.hint"))
         row = tk.Frame(body, bg=c("surface"))
         row.pack(fill="x", pady=(8, 0))
-        label(row, t("settings.language.label"), 10, "bold", "muted").pack(
+        label(row, t("settings.language.label"), 11, "bold", "muted").pack(
             side="left", padx=(0, 16)
         )
         self.language = ChoiceCombo(
@@ -72,17 +72,17 @@ class SettingsPage(Page):
         row.pack(fill="x", pady=(8, 0))
         left = tk.Frame(row, bg=c("surface"))
         left.pack(side="left", padx=(0, 40))
-        label(left, t("settings.theme"), 10, "bold", "muted").pack(fill="x", pady=(0, 4))
+        label(left, t("settings.theme"), 11, "bold", "muted").pack(fill="x", pady=(0, 4))
         from frontend import theme
         Segmented(left, list(config.THEMES.items()), theme.theme_name(),
                   lambda k: self.app.set_theme(k)).pack(anchor="w")
         right = tk.Frame(row, bg=c("surface"))
         right.pack(side="left")
-        label(right, t("settings.currency_symbol"), 10, "bold", "muted").pack(fill="x", pady=(0, 4))
+        label(right, t("settings.currency_symbol"), 11, "bold", "muted").pack(fill="x", pady=(0, 4))
         Segmented(right, [(s, s) for s in config.CURRENCY_OPTIONS], formatters.get_currency_symbol(),
                   lambda k: self.app.set_currency(k)).pack(anchor="w")
         label(body, t("settings.currency_hint"),
-              10, color="muted").pack(fill="x", pady=(8, 0))
+              11, color="muted").pack(fill="x", pady=(8, 0))
 
     # ---- categorias ----
     def _categories(self):
@@ -164,18 +164,18 @@ class SettingsPage(Page):
         Button(row, t("settings.restore_file"), lambda: self.restore(None), "secondary", icon="upload").pack(side="left")
         items = backup.list_backups()
         if not items:
-            label(body, t("settings.no_backups"), 10, color="muted").pack(fill="x", pady=6)
+            label(body, t("settings.no_backups"), 11, color="muted").pack(fill="x", pady=6)
         for item in items[:6]:
             line = tk.Frame(body, bg=c("surface"))
             line.pack(fill="x", pady=2)
-            label(line, item["modified"].strftime("%d/%m/%Y %H:%M"), 10, "bold").pack(side="left")
-            label(line, f"   {item['name']}  ·  {_size(item['size'])}", 10, color="muted").pack(side="left")
+            label(line, item["modified"].strftime("%d/%m/%Y %H:%M"), 11, "bold").pack(side="left")
+            label(line, f"   {item['name']}  ·  {_size(item['size'])}", 11, color="muted").pack(side="left")
             link = tk.Label(line, text=t("settings.restore"), fg=c("primary"), bg=c("surface"),
-                            font=font(10, "bold"), cursor="hand2")
+                            font=font(11, "bold"), cursor="hand2")
             link.pack(side="right")
             link.bind("<Button-1>", lambda e, p=item["path"]: self.restore(p))
         if len(items) > 6:
-            label(body, t("settings.old_backups", count=len(items) - 6), 10, color="muted").pack(fill="x", pady=(4, 0))
+            label(body, t("settings.old_backups", count=len(items) - 6), 11, color="muted").pack(fill="x", pady=(4, 0))
 
     def make_backup(self):
         self.guarded(lambda: (backup.manual_backup(), self.app.toast(t("toast.backup_created"), "success"), self.refresh()))
@@ -209,6 +209,6 @@ class SettingsPage(Page):
     def _about(self):
         body = self._card(t("settings.about"))
         label(body, f"{config.APP_TITLE} {config.APP_VERSION}", 11, "bold").pack(fill="x", pady=(4, 0))
-        label(body, t("settings.data_path", path=database.DATA_DIR), 10, color="muted", wraplength=760,
+        label(body, t("settings.data_path", path=database.DATA_DIR), 11, color="muted", wraplength=760,
               justify="left").pack(fill="x", pady=(2, 0))
-        label(body, t("settings.privacy"), 10, color="muted").pack(fill="x")
+        label(body, t("settings.privacy"), 11, color="muted").pack(fill="x")

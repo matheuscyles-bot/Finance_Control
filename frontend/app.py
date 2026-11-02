@@ -264,7 +264,7 @@ class App:
         # marca do app anterior: quadrado azul com "F" + "FINANCE / Control"
         round_rect(s, 24, cy - 17, 58, cy + 17, 9, c("primary"), c("primary"), tags="top")
         s.create_text(41, cy + 1, text="FC", font=font(14, "bold"), fill=c("primary_text"), tags="top")
-        s.create_text(70, cy - 8, text="FINANCE", anchor="w", font=font(8, "bold"),
+        s.create_text(70, cy - 8, text="FINANCE", anchor="w", font=font(10, "bold"),
                       fill=c("muted"), tags="top")
         s.create_text(70, cy + 7, text="Control", anchor="w", font=font(15, "bold"),
                       fill=c("text"), tags=("top", "brand"))
@@ -398,10 +398,10 @@ class App:
 
     def _kpi_block_width(self, k):
         value_w = measure(font(22, "semibold"), k["fmt"](k["value"]))
-        cap_w = measure(font(10), k["caption"])
+        cap_w = measure(font(11), k["caption"])
         extra = 0
         if k.get("badge"):
-            extra += measure(font(9, "bold"), k["badge"][0]) + 16 + 10
+            extra += measure(font(10, "bold"), k["badge"][0]) + 16 + 10
         if k.get("toggle"):
             extra += 38 + 12
         return 44 + 14 + max(value_w + extra, cap_w)
@@ -416,7 +416,7 @@ class App:
             wdg.destroy()
         self._kpi_widgets = []
         x, cy = self._kpi_origin
-        vf, cf, bf = font(22, "semibold"), font(10), font(9, "bold")
+        vf, cf, bf = font(22, "semibold"), font(11), font(10, "bold")
         for k in kpis:
             base = self._sample(x + 22, cy)
             circle = mix(base, c("text"), 0.08)
@@ -575,20 +575,20 @@ class App:
         body = pop.body
         fill = c("surface_alt")
         label(body, t("notif.title"), 13, "semibold", bg=fill).pack(fill="x")
-        label(body, t("notif.subtitle"), 10, color="muted", bg=fill).pack(fill="x", pady=(2, 10))
+        label(body, t("notif.subtitle"), 11, color="muted", bg=fill).pack(fill="x", pady=(2, 10))
         items = planning.upcoming()
         if not items:
             label(body, t("notif.empty"), 11, color="muted", bg=fill).pack(fill="x", pady=(4, 8))
         for item in items[:6]:
             row = tk.Frame(body, bg=fill)
             row.pack(fill="x", pady=4)
-            label(row, formatters.format_date_short(item["date"]), 10, "semibold", color="muted",
+            label(row, formatters.format_date_short(item["date"]), 11, "semibold", color="muted",
                   bg=fill, width=7).pack(side="left")
             label(row, item["description"], 11, bg=fill).pack(side="left", padx=(6, 0))
             income = item["kind"] == "income"
             label(row, ("+" if income else "−") + formatters.money(item["amount"]), 11, "semibold",
                   color="income" if income else "expense", bg=fill).pack(side="right")
-        link = label(body, t("notif.view_all") + "  ↗", 10, "bold", color="accent_text", bg=fill,
+        link = label(body, t("notif.view_all") + "  ↗", 11, "bold", color="accent_text", bg=fill,
                      cursor="hand2")
         link.pack(fill="x", pady=(10, 0))
         link.bind("<Button-1>", lambda e: (pop.close(), self.navigate("recurring")))

@@ -132,18 +132,18 @@ class DashboardPage(Page):
         note = t("dash.spent_in_months", months=n) + "  ·  " + (
             t("dash.within_budget", count=within, total=len(with_budget)) if with_budget
             else t("dash.no_budget_target"))
-        label(p.content, note, 10, color="muted", bg=f).pack(fill="x", pady=(2, 0))
+        label(p.content, note, 11, color="muted", bg=f).pack(fill="x", pady=(2, 0))
         legend = tk.Frame(p.content, bg=f)
         legend.pack(fill="x", pady=(12, 0))
         dot = tk.Canvas(legend, width=10, height=10, bg=f, highlightthickness=0)
         dot.create_oval(1, 1, 9, 9, fill=c("coral"), outline=c("coral"))
         dot.pack(side="left")
-        label(legend, t("common.expense"), 10, "medium", color="muted", bg=f).pack(side="left", padx=(6, 18))
+        label(legend, t("common.expense"), 11, "medium", color="muted", bg=f).pack(side="left", padx=(6, 18))
         if target:
             dash = tk.Canvas(legend, width=22, height=10, bg=f, highlightthickness=0)
             dash.create_line(1, 5, 21, 5, fill=mix(f, c("text"), 0.7), dash=(4, 3), width=1.4)
             dash.pack(side="left")
-            label(legend, t("dash.legend_target"), 10, "medium", color="muted", bg=f).pack(side="left", padx=(6, 6))
+            label(legend, t("dash.legend_target"), 11, "medium", color="muted", bg=f).pack(side="left", padx=(6, 6))
             label(legend, formatters.money_compact(target), 10, "bold", bg=f).pack(side="left")
         chart = AreaChart(p.content, height=232, color=c("coral"), bg=f)
         chart.pack(fill="both", expand=True, pady=(10, 0))
@@ -169,14 +169,14 @@ class DashboardPage(Page):
             b, f = mini.body, mini.fill
             head = tk.Frame(b, bg=f)
             head.pack(fill="x")
-            label(head, formatters.format_date_short(r["transaction_date"]), 9, "semibold",
+            label(head, formatters.format_date_short(r["transaction_date"]), 10, "semibold",
                   color="muted", bg=f).pack(side="left")
             more = CircleButton(head, "ellipsis", None, size=24, kind="plain", bg=f, icon_size=13)
             more.command = lambda r=r, m=more: popup_menu(m, self._row_menu(r))
             more.pack(side="right")
             category = category_label(r["category_name"]) if r["category_name"] else t("common.no_category")
             label(b, clip(tx.describe(r), 24), 12, "semibold", bg=f).pack(fill="x", pady=(6, 0))
-            label(b, clip(f"{category} · {r['account_name']}", 30), 9, color="muted", bg=f).pack(fill="x")
+            label(b, clip(f"{category} · {r['account_name']}", 30), 10, color="muted", bg=f).pack(fill="x")
             foot = tk.Frame(b, bg=f)
             foot.pack(fill="x", pady=(12, 0))
             left = tk.Frame(foot, bg=f)
@@ -186,7 +186,7 @@ class DashboardPage(Page):
             base = s["income"] if income else s["expense"]
             share = round(r["amount"] * 100 / base) if base else 0
             label(left, t("dash.share_income" if income else "dash.share_expense", percent=share),
-                  9, color="muted", bg=f).pack(anchor="w")
+                  10, color="muted", bg=f).pack(anchor="w")
             AvatarStack(foot, [category, r["account_name"]], size=24, bg=f).pack(side="right", anchor="s")
         return p
 
@@ -208,7 +208,7 @@ class DashboardPage(Page):
         gauge.pack(pady=(0, 6))
         if not bsum["budget"]:
             gauge.set(0, "—", t("dash.goal_caption"))
-            label(p.content, t("dash.goal_empty"), 10, color=soft, bg=fill, anchor="center",
+            label(p.content, t("dash.goal_empty"), 11, color=soft, bg=fill, anchor="center",
                   justify="center", wraplength=220).pack(fill="x")
             Button(p.content, t("common.new_budget"), self.app.new_budget, "primary", icon="plus",
                    pad=(14, 7)).pack(pady=(10, 0))
@@ -216,7 +216,7 @@ class DashboardPage(Page):
         ratio = bsum["spent"] / bsum["budget"]
         gauge.set(ratio, f"{round(ratio * 100)}%", t("dash.goal_caption"))
         label(p.content, t("dash.goal_of", spent=money(bsum["spent"]), budget=money(bsum["budget"])),
-              10, "medium", color=soft, bg=fill, anchor="center").pack(fill="x")
+              11, "medium", color=soft, bg=fill, anchor="center").pack(fill="x")
         return p
 
     def _copy_budgets(self, month):
@@ -235,7 +235,7 @@ class DashboardPage(Page):
         big = label(p.content, money(s["expense"]), 24, "semibold", bg=f)
         big.pack(fill="x")
         count_label(big, s["expense"], money)
-        label(p.content, t("dash.mix_caption", count=len(cats)), 10, color="muted", bg=f).pack(fill="x")
+        label(p.content, t("dash.mix_caption", count=len(cats)), 11, color="muted", bg=f).pack(fill="x")
         palette = c("chart")
         groups = group_categories([{**r, "category_name": category_label(r["category_name"])} for r in cats],
                                   limit=4, other=t("common.other"))
@@ -253,7 +253,7 @@ class DashboardPage(Page):
             label(row, clip(name, 22), 10, bg=f).pack(side="left", padx=(8, 0))
             label(row, f"{round(value * 100 / total)}%", 10, "semibold", bg=f).pack(side="right")
         if not items:
-            label(p.content, t("dashboard.no_expenses_month"), 10, color="muted", bg=f).pack(fill="x")
+            label(p.content, t("dashboard.no_expenses_month"), 11, color="muted", bg=f).pack(fill="x")
         return p
 
     def _upcoming(self):
@@ -265,7 +265,7 @@ class DashboardPage(Page):
         items = planning.scheduled_items((today + timedelta(days=1)).isoformat(),
                                          (today + timedelta(days=30)).isoformat())[:5]
         if not items:
-            label(p.content, t("dash.upcoming_empty"), 10, color="muted", bg=f, wraplength=240,
+            label(p.content, t("dash.upcoming_empty"), 11, color="muted", bg=f, wraplength=240,
                   justify="left").pack(fill="x", pady=8)
         for item in items:
             row = tk.Frame(p.content, bg=f)
@@ -274,13 +274,13 @@ class DashboardPage(Page):
             day.create_oval(1, 1, 39, 39, fill=c("surface_alt"), outline=c("border"))
             day.create_text(20, 15, text=item["date"][8:10], font=font(11, "bold"), fill=c("text"))
             day.create_text(20, 28, text=t(f"format.months_abbr.{int(item['date'][5:7])}"),
-                            font=font(7, "semibold"), fill=c("muted"))
+                            font=font(8, "semibold"), fill=c("muted"))
             day.pack(side="left")
             mid = tk.Frame(row, bg=f)
             mid.pack(side="left", fill="x", expand=True, padx=(10, 0))
             label(mid, clip(item["description"], 22), 11, "medium", bg=f).pack(fill="x")
             label(mid, clip(category_label(item["category_name"]) if item["category_name"]
-                            else t("common.no_category"), 24), 9, color="muted", bg=f).pack(fill="x")
+                            else t("common.no_category"), 24), 10, color="muted", bg=f).pack(fill="x")
             income = item["kind"] == "income"
             label(row, ("+" if income else "−") + money(item["amount"]), 10, "semibold",
                   "income" if income else "text", bg=f).pack(side="right")
@@ -299,7 +299,7 @@ class DashboardPage(Page):
             mid.pack(side="left", fill="x", expand=True, padx=(12, 0))
             label(mid, clip(tx.describe(r), 48), 11, "medium", bg=f).pack(fill="x")
             label(mid, f"{formatters.format_date_short(r['transaction_date'])} · {category} · {r['account_name']}",
-                  9, color="muted", bg=f).pack(fill="x")
+                  10, color="muted", bg=f).pack(fill="x")
             income = r["kind"] == "income"
             label(row, ("+" if income else "−") + money(r["amount"]), 11, "semibold",
                   "income" if income else "text", bg=f).pack(side="right")
@@ -318,7 +318,7 @@ class DashboardPage(Page):
             note = t("common.current_balance")
             if a["projected_balance"] != a["balance"]:
                 note = t("dashboard.balance_predicted", amount=money(a["projected_balance"]))
-            label(mid, note, 9, color="muted", bg=f).pack(fill="x")
+            label(mid, note, 10, color="muted", bg=f).pack(fill="x")
             label(row, money(a["balance"]), 11, "semibold",
                   "text" if a["balance"] >= 0 else "expense", bg=f).pack(side="right")
         return p

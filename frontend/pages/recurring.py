@@ -37,7 +37,7 @@ class RecurringPage(Page):
         self.pause_btn.pack(side="right", padx=(8, 0))
         Button(foot, t("common.delete"), self.delete, "secondary", pad=(12, 5)).pack(side="right", padx=(8, 0))
         Button(foot, t("common.edit"), self.edit, "secondary", pad=(12, 5)).pack(side="right")
-        label(foot, t("recurring.due_hint"), 10, color="muted").pack(side="left")
+        label(foot, t("recurring.due_hint"), 11, color="muted").pack(side="left")
         self.tree.tree.bind("<<TreeviewSelect>>", lambda e: self._sync_button())
         self.rows = {}
 

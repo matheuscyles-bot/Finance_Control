@@ -59,14 +59,14 @@ class TransactionsPage(Page):
         self.account.grid(row=0, column=4, padx=(0, 10))
         self.account.bind("<<ComboboxSelected>>", lambda e: self.reload())
         clear = tk.Label(b, text=t("common.clear_filters"), fg=c("primary"), bg=c("surface"),
-                         font=font(10, "bold"), cursor="hand2")
+                         font=font(11, "bold"), cursor="hand2")
         clear.grid(row=0, column=5)
         clear.bind("<Button-1>", lambda e: self.clear_filters())
         self.custom = tk.Frame(b, bg=c("surface"))
-        label(self.custom, t("common.from"), 10, color="muted").pack(side="left", padx=(0, 4))
+        label(self.custom, t("common.from"), 11, color="muted").pack(side="left", padx=(0, 4))
         self.start = DateField(self.custom, width=10)
         self.start.pack(side="left", padx=(0, 10))
-        label(self.custom, t("common.until"), 10, color="muted").pack(side="left", padx=(0, 4))
+        label(self.custom, t("common.until"), 11, color="muted").pack(side="left", padx=(0, 4))
         self.end = DateField(self.custom, width=10)
         self.end.pack(side="left")
         for f in (self.start, self.end):

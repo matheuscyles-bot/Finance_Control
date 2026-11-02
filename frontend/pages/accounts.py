@@ -41,7 +41,7 @@ class AccountsPage(Page):
         label(head, "  " + money(total), 16, "bold", "text" if total >= 0 else "expense", bg="bg").pack(side="left")
         tk.Checkbutton(head, text=t("common.show_archived"), variable=self.show_archived,
                        command=self.refresh, bg=c("bg"), fg=c("muted"), selectcolor=c("surface"),
-                       activebackground=c("bg"), font=font(10)).pack(side="right")
+                       activebackground=c("bg"), font=font(11)).pack(side="right")
 
         grid = tk.Frame(self.content, bg=c("bg"))
         grid.pack(fill="x")
@@ -54,14 +54,14 @@ class AccountsPage(Page):
             top.pack(fill="x")
             label(top, a["name"], 13, "bold").pack(side="left")
             if a["archived"]:
-                label(top, t("common.archived"), 9, color="muted", anchor="e").pack(side="right")
-            label(card.body, config.ACCOUNT_TYPES.get(a["type"], ""), 10, color="muted").pack(fill="x")
+                label(top, t("common.archived"), 10, color="muted", anchor="e").pack(side="right")
+            label(card.body, config.ACCOUNT_TYPES.get(a["type"], ""), 11, color="muted").pack(fill="x")
             label(card.body, money(a["balance"]), 22, "bold",
                   "text" if a["balance"] >= 0 else "expense").pack(fill="x", pady=(10, 0))
             note = t("common.current_balance")
             if a["projected_balance"] != a["balance"]:
                 note = t("common.projected_balance", amount=money(a["projected_balance"]))
-            label(card.body, note, 10, color="muted").pack(fill="x")
+            label(card.body, note, 11, color="muted").pack(fill="x")
             actions = tk.Frame(card.body, bg=c("surface"))
             actions.pack(fill="x", pady=(12, 0))
             Button(actions, "Editar", lambda a=a: self.edit_account(a["id"]), "secondary", pad=(10, 4)).pack(side="left")
@@ -79,7 +79,7 @@ class AccountsPage(Page):
         top = tk.Frame(card.body, bg=c("surface"))
         top.pack(fill="x", padx=18, pady=(14, 8))
         label(top, t("common.transfer_section"), 13, "bold").pack(side="left")
-        label(top, t("common.transfer_neutral"), 10, color="muted", anchor="e").pack(side="right")
+        label(top, t("common.transfer_neutral"), 11, color="muted", anchor="e").pack(side="right")
         transfers = accounts.list_transfers(limit=100)
         if not transfers:
             label(card.body, t("common.no_transfer"),
