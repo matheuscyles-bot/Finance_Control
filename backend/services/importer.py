@@ -57,6 +57,11 @@ def _map_headers(header):
                 mapping[field] = index
     return mapping
 
+def _parse_signed(text):
+    text = (text or "").strip()
+    negative = text.startswith("-") or (text.startswith("(") and text.endswith(")"))
+    cleaned = text.strip("()").lstrip("+-").strip()
+    return parse_amount(cleaned), negative
 
 def _strip_csv_guard(value):
     """Desfaz o apóstrofo que a exportação coloca antes de =, +, - e @."""
