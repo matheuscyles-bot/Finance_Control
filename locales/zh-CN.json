@@ -450,5 +450,14 @@
   "schedule.no_match": "没有符合这些筛选条件的内容。",
   "schedule.rules_title": "我的定期项目",
   "schedule.next_on": "下次：{date}",
-  "schedule.projected": "预计"
+  "schedule.projected": "预计",
+  "dialog.edit_transaction": "编辑交易",
+  "dialog.edit_transfer": "编辑转账",
+  "dialog.edit_account": "编辑账户",
+  "dialog.edit_recurring": "编辑定期项目",
+  "dialog.name": "名称",
+  "dialog.type": "类型",
+  "dialog.frequency": "频率",
+  "dialog.delete_category": "删除分类",
+  "dialog.all_files": "所有文件"
 }

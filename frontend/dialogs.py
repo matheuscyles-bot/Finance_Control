@@ -10,13 +10,13 @@ from frontend.theme import SPACING, c, font
 from frontend.widgets import (Button, ChoiceCombo, DateField, Segmented, label)
 from backend.utils import formatters
 from backend.utils.money import minor_to_text
-from backend.utils.i18n import category_label
+from backend.utils.i18n import category_label, t
 
 
 class Dialog(tk.Toplevel):
     """Base: janela modal com título, corpo, mensagem de erro e botões."""
 
-    def __init__(self, app, title, subtitle=None, width=460, save_text="Salvar",
+    def __init__(self, app, title, subtitle=None, width=460, save_text=None,
                  danger=False):
         super().__init__(app.root)
         self.app = app
@@ -42,9 +42,9 @@ class Dialog(tk.Toplevel):
         foot.pack(fill="x", pady=(14, 0))
         inner = tk.Frame(foot, bg=c("surface_alt"))
         inner.pack(fill="x", padx=28, pady=14)
-        self.save_button = Button(inner, save_text, self.submit, "danger" if danger else "primary")
+        self.save_button = Button(inner, save_text or t("common.save"), self.submit, "danger" if danger else "primary")
         self.save_button.pack(side="right")
-        Button(inner, "Cancelar", self.close, "secondary").pack(side="right", padx=(0, 10))
+        Button(inner, t("common.cancel"), self.close, "secondary").pack(side="right", padx=(0, 10))
         self.bind("<Escape>", lambda e: self.close())
         self.bind("<Return>", lambda e: self.submit())
         self.minsize(width, 0)
@@ -97,16 +97,16 @@ class Dialog(tk.Toplevel):
         return True
 
 
-def confirm(app, title, message, confirm_text="Excluir", danger=True):
+def confirm(app, title, message, confirm_text=None, danger=True):
     class _Confirm(Dialog):
         def save(self_inner):
             self_inner.result = True
-    dlg = _Confirm(app, title, message, width=420, save_text=confirm_text, danger=danger)
+    dlg = _Confirm(app, title, message, width=420, save_text=confirm_text or t("common.delete"), danger=danger)
     dlg.present(dlg.save_button)
     return bool(dlg.wait())
 
 
-def prompt_text(app, title, label_text, initial="", save_text="Salvar", subtitle=None):
+def prompt_text(app, title, label_text, initial="", save_text=None, subtitle=None):
     class _Prompt(Dialog):
         def save(self_inner):
             self_inner.result = self_inner.entry.get()
@@ -127,7 +127,7 @@ def _account_items(include=None):
     if include and include not in [i for i, _ in items]:
         row = accounts.get_account(include)
         if row:
-            items.append((row["id"], row["name"] + " (arquivada)"))
+            items.append((row["id"], row["name"] + " " + t("dialog.no_account_archived")))
     return items
 
 
@@ -135,11 +135,11 @@ class TransactionDialog(Dialog):
     def __init__(self, app, transaction=None, defaults=None, kind="expense"):
         self.transaction = transaction
         editing = transaction is not None
-        super().__init__(app, "Editar movimentação" if editing else "Nova movimentação",
+        super().__init__(app, t("dialog.edit_transaction") if editing else t("common.new_transaction"),
                          width=480)
         source = dict(transaction or defaults or {})
         self.kind = source["kind"] if source else kind
-        self.segment = Segmented(self.body, [("expense", "Despesa"), ("income", "Receita")],
+        self.segment = Segmented(self.body, [("expense", t("common.expense_type")), ("income", t("common.income_type"))],
                                  self.kind, self._kind_changed)
         self.segment.pack(anchor="w", pady=(0, 12))
         locked = editing and transaction["installment_total"]
@@ -148,10 +148,10 @@ class TransactionDialog(Dialog):
                 lbl.unbind("<Button-1>")
 
         self.amount = self.field(
-            "Valor", lambda p: ttk.Entry(p, font=font(13, "bold")))
+            t("common.amount"), lambda p: ttk.Entry(p, font=font(13, "bold")))
         if source:
             self.amount.insert(0, minor_to_text(source["amount"]).replace(".", ","))
-        self.description = self.field("Descrição", lambda p: ttk.Entry(p, font=font(11)))
+        self.description = self.field(t("common.description"), lambda p: ttk.Entry(p, font=font(11)))
         if source:
             self.description.insert(0, source["description"])
         row = tk.Frame(self.body, bg=c("surface"))
@@ -160,11 +160,11 @@ class TransactionDialog(Dialog):
         left.pack(side="left", fill="x", expand=True, padx=(0, 8))
         right = tk.Frame(row, bg=c("surface"))
         right.pack(side="left", fill="x", expand=True)
-        label(left, "Categoria", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(left, t("common.category"), 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.installments = None
         self.category = ChoiceCombo(left, [], width=20)
         self.category.pack(fill="x")
-        label(right, "Conta", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(right, t("common.account"), 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.account = ChoiceCombo(right, _account_items(source.get("account_id") if source else None), width=20)
         self.account.pack(fill="x")
         if source and source.get("account_id"):
@@ -175,19 +175,19 @@ class TransactionDialog(Dialog):
         row2.pack(fill="x", pady=(12, 0))
         dleft = tk.Frame(row2, bg=c("surface"))
         dleft.pack(side="left", padx=(0, 16))
-        label(dleft, "Data", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(dleft, t("common.date"), 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.date = DateField(dleft, source.get("transaction_date") if source else None)
         self.date.pack(anchor="w")
         if not editing:
             dright = tk.Frame(row2, bg=c("surface"))
             dright.pack(side="left")
-            label(dright, "Parcelas (despesas)", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
+            label(dright, t("dialog.installments_expense"), 11, "bold", "muted").pack(fill="x", pady=(0, 3))
             self.installments = ttk.Spinbox(dright, from_=1, to=config.MAX_INSTALLMENTS,
                                             width=5, font=font(11))
             self.installments.set(1)
             self.installments.pack(anchor="w")
             self._kind_changed(self.kind)
-        self.notes = self.field("Observações (opcional)",
+        self.notes = self.field(t("common.notes_optional"),
                                 lambda p: ttk.Entry(p, font=font(11)))
         self.notes.master.pack_configure(pady=(12, 10))
         if source:
@@ -223,25 +223,25 @@ class TransactionDialog(Dialog):
 class TransferDialog(Dialog):
     def __init__(self, app, transfer=None):
         self.transfer = transfer
-        super().__init__(app, "Editar transferência" if transfer else "Nova transferência",
-                         "Mover dinheiro entre contas não conta como receita nem despesa.",
+        super().__init__(app, t("dialog.edit_transfer") if transfer else t("common.new_transfer"),
+                         t("dialog.transfer_hint"),
                          width=460)
         items = _account_items()
         if transfer:
             for aid in (transfer["from_account_id"], transfer["to_account_id"]):
                 if aid not in [i for i, _ in items]:
                     items = _account_items(aid)
-        self.origin = self.field("De", lambda p: ChoiceCombo(p, items, width=30))
-        self.target = self.field("Para", lambda p: ChoiceCombo(p, items, width=30))
+        self.origin = self.field(t("common.from"), lambda p: ChoiceCombo(p, items, width=30))
+        self.target = self.field(t("common.to"), lambda p: ChoiceCombo(p, items, width=30))
         if len(items) > 1:
             self.target.current(1)
-        self.amount = self.field("Valor", lambda p: ttk.Entry(p, font=font(13, "bold")))
+        self.amount = self.field(t("common.amount"), lambda p: ttk.Entry(p, font=font(13, "bold")))
         row = tk.Frame(self.body, bg=c("surface"))
         row.pack(fill="x")
-        label(row, "Data", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(row, t("common.date"), 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.date = DateField(row, transfer["transfer_date"] if transfer else None)
         self.date.pack(anchor="w")
-        self.notes = self.field("Observações (opcional)", lambda p: ttk.Entry(p, font=font(11)))
+        self.notes = self.field(t("common.notes_optional"), lambda p: ttk.Entry(p, font=font(11)))
         self.notes.master.pack_configure(pady=(12, 10))
         if transfer:
             self.origin.set_id(transfer["from_account_id"])
@@ -263,13 +263,13 @@ class TransferDialog(Dialog):
 class AccountDialog(Dialog):
     def __init__(self, app, account=None):
         self.account = account
-        super().__init__(app, "Editar conta" if account else "Nova conta", width=440)
-        self.name = self.field("Nome", lambda p: ttk.Entry(p, font=font(11)))
+        super().__init__(app, t("dialog.edit_account") if account else t("common.new_account"), width=440)
+        self.name = self.field(t("dialog.name"), lambda p: ttk.Entry(p, font=font(11)))
         types = list(config.ACCOUNT_TYPES.items())
-        self.type = self.field("Tipo", lambda p: ChoiceCombo(p, types, width=30))
+        self.type = self.field(t("dialog.type"), lambda p: ChoiceCombo(p, types, width=30))
         self.opening = self.field(
-            "Saldo inicial", lambda p: ttk.Entry(p, font=font(11)),
-            "O saldo da conta quando você começou a usar o app (pode ser negativo).")
+            t("dialog.opening_balance"), lambda p: ttk.Entry(p, font=font(11)),
+            t("dialog.opening_balance_hint"))
         if account:
             self.name.insert(0, account["name"])
             self.type.set_id(account["type"])
@@ -290,14 +290,14 @@ class AccountDialog(Dialog):
 class BudgetDialog(Dialog):
     def __init__(self, app, month, category_id=None, amount=None):
         self.month = month
-        super().__init__(app, "Orçamento do mês",
-                         f"{formatters.month_label(month)} · limite de gasto por categoria",
+        super().__init__(app, t("dialog.month_budget"),
+                         t("dialog.month_budget_hint", month=formatters.month_label(month)),
                          width=420)
         items = _cat_items("expense")
-        self.category = self.field("Categoria", lambda p: ChoiceCombo(p, items, width=30))
+        self.category = self.field(t("common.category"), lambda p: ChoiceCombo(p, items, width=30))
         if category_id:
             self.category.set_id(category_id)
-        self.amount = self.field("Limite do mês", lambda p: ttk.Entry(p, font=font(13, "bold")))
+        self.amount = self.field(t("dialog.month_limit"), lambda p: ttk.Entry(p, font=font(13, "bold")))
         if amount:
             self.amount.insert(0, minor_to_text(amount).replace(".", ","))
         self.present(self.amount)
@@ -310,49 +310,49 @@ class BudgetDialog(Dialog):
 class RecurringDialog(Dialog):
     def __init__(self, app, rule=None):
         self.rule = rule
-        super().__init__(app, "Editar recorrência" if rule else "Nova recorrência",
-                         "Lançamentos criados automaticamente (aluguel, assinaturas, salário...).",
+        super().__init__(app, t("dialog.edit_recurring") if rule else t("common.new_recurring"),
+                         t("dialog.recurring_hint"),
                          width=480)
         self.kind = rule["kind"] if rule else "expense"
-        self.segment = Segmented(self.body, [("expense", "Despesa"), ("income", "Receita")],
+        self.segment = Segmented(self.body, [("expense", t("common.expense_type")), ("income", t("common.income_type"))],
                                  self.kind, self._kind_changed)
         self.segment.pack(anchor="w", pady=(0, 12))
-        self.amount = self.field("Valor", lambda p: ttk.Entry(p, font=font(13, "bold")))
-        self.description = self.field("Descrição", lambda p: ttk.Entry(p, font=font(11)))
+        self.amount = self.field(t("common.amount"), lambda p: ttk.Entry(p, font=font(13, "bold")))
+        self.description = self.field(t("common.description"), lambda p: ttk.Entry(p, font=font(11)))
         row = tk.Frame(self.body, bg=c("surface"))
         row.pack(fill="x")
         a = tk.Frame(row, bg=c("surface"))
         a.pack(side="left", fill="x", expand=True, padx=(0, 8))
         b = tk.Frame(row, bg=c("surface"))
         b.pack(side="left", fill="x", expand=True)
-        label(a, "Categoria", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(a, t("common.category"), 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.category = ChoiceCombo(a, [], width=20)
         self.category.pack(fill="x")
-        label(b, "Conta", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(b, t("common.account"), 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.account = ChoiceCombo(b, _account_items(rule["account_id"] if rule else None), width=20)
         self.account.pack(fill="x")
         row2 = tk.Frame(self.body, bg=c("surface"))
         row2.pack(fill="x", pady=(12, 0))
         f1 = tk.Frame(row2, bg=c("surface"))
         f1.pack(side="left", padx=(0, 12))
-        label(f1, "Frequência", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(f1, t("dialog.frequency"), 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.frequency = ChoiceCombo(f1, list(config.FREQUENCIES.items()), width=11)
         self.frequency.pack()
         self.frequency.set_id("monthly")
         f2 = tk.Frame(row2, bg=c("surface"))
         f2.pack(side="left", padx=(0, 12))
-        label(f2, "Próxima data" if rule else "Começa em", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(f2, t("dialog.final_date") if rule else t("dialog.start_date"), 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.start = DateField(f2, rule["next_date"] if rule else None, width=11)
         self.start.pack()
         f3 = tk.Frame(row2, bg=c("surface"))
         f3.pack(side="left")
-        label(f3, "Termina em (opcional)", 11, "bold", "muted").pack(fill="x", pady=(0, 3))
+        label(f3, t("dialog.end_date_optional"), 11, "bold", "muted").pack(fill="x", pady=(0, 3))
         self.end = DateField(
             f3, rule["end_date"] if rule and rule["end_date"] else None,
             width=11, optional=True
         )
         self.end.pack()
-        self.notes = self.field("Observações (opcional)", lambda p: ttk.Entry(p, font=font(11)))
+        self.notes = self.field(t("common.notes_optional"), lambda p: ttk.Entry(p, font=font(11)))
         self.notes.master.pack_configure(pady=(12, 10))
         if rule:
             self.amount.insert(0, minor_to_text(rule["amount"]).replace(".", ","))
@@ -386,19 +386,18 @@ class MoveCategoryDialog(Dialog):
 
     def __init__(self, app, category, count):
         self.category = category
-        super().__init__(app, "Excluir categoria",
-                         f"“{category['name']}” tem {count} registro(s) associado(s). "
-                         "Escolha a categoria que vai recebê-los.",
-                         width=440, save_text="Mover e excluir", danger=True)
+        super().__init__(app, t("dialog.delete_category"),
+                         t("dialog.move_category_hint", category=category["name"], count=count),
+                         width=440, save_text=t("dialog.move_delete"), danger=True)
         items = [(i, n) for i, n in _cat_items(category["kind"]) if i != category["id"]]
-        self.target = self.field("Mover para", lambda p: ChoiceCombo(p, items, width=30))
+        self.target = self.field(t("dialog.move_category"), lambda p: ChoiceCombo(p, items, width=30))
         if not items:
-            self.show_error("Crie outra categoria do mesmo tipo antes de excluir esta.")
+            self.show_error(t("dialog.category_create_first"))
         self.present(self.target)
 
     def save(self):
         if self.target.get_id() is None:
-            raise ValueError("Escolha uma categoria de destino.")
+            raise ValueError(t("dialog.select_target_category"))
         categories.delete_category(self.category["id"], move_to=self.target.get_id())
         self.result = True
 
@@ -407,30 +406,29 @@ class ImportDialog(Dialog):
     """Escolhe o CSV, mostra um resumo e só grava depois da confirmação."""
 
     def __init__(self, app):
-        super().__init__(app, "Importar movimentações (CSV)",
-                         "A primeira linha deve ter: Data, Descrição, Valor e, se quiser, "
-                         "Tipo, Categoria e Observações.", width=560, save_text="Importar")
+        super().__init__(app, t("dialog.csv_title"),
+                         t("dialog.import_hint"), width=560, save_text=t("common.import"))
         self.prep = None
         items = _account_items()
-        self.account = self.field("Importar para a conta", lambda p: ChoiceCombo(p, items, width=34))
+        self.account = self.field(t("dialog.import_account"), lambda p: ChoiceCombo(p, items, width=34))
         self.account.bind("<<ComboboxSelected>>", lambda e: self._reload())
         self.path = None
-        self.file_label = label(self.body, "Nenhum arquivo selecionado.", 11, color="muted")
+        self.file_label = label(self.body, t("dialog.no_file"), 11, color="muted")
         self.file_label.pack(fill="x", pady=(0, 6))
-        Button(self.body, "Escolher arquivo…", self.choose, "secondary", icon="upload").pack(anchor="w")
+        Button(self.body, t("dialog.choose_file"), self.choose, "secondary", icon="upload").pack(anchor="w")
         self.summary = tk.Label(self.body, text="", bg=c("surface"), fg=c("text"), font=font(11),
                                 justify="left", anchor="w", wraplength=500)
         self.summary.pack(fill="x", pady=(12, 0))
         self.skip = tk.BooleanVar(value=True)
-        tk.Checkbutton(self.body, text="Ignorar movimentações que já existem", variable=self.skip,
+        tk.Checkbutton(self.body, text=t("dialog.skip_duplicates"), variable=self.skip,
                        bg=c("surface"), fg=c("text"), selectcolor=c("surface"),
                        activebackground=c("surface"), font=font(11),
                        anchor="w").pack(fill="x", pady=(6, 0))
         self.present()
 
     def choose(self):
-        path = filedialog.askopenfilename(parent=self, title="Escolha o arquivo CSV",
-                                          filetypes=[("CSV", "*.csv *.txt"), ("Todos", "*.*")])
+        path = filedialog.askopenfilename(parent=self, title=t("dialog.choose_csv"),
+                                          filetypes=[("CSV", "*.csv *.txt"), (t("dialog.all_files"), "*.*")])
         if path:
             self.path = path
             self._reload()
@@ -448,15 +446,15 @@ class ImportDialog(Dialog):
             return
         self.show_error("")
         p = self.prep
-        text = (f"{len(p['rows'])} linha(s) válida(s), {p['duplicates']} já existente(s), "
-                f"{len(p['errors'])} com problema.")
+        text = t("dialog.import_summary", valid=len(p["rows"]), duplicates=p["duplicates"],
+                 errors=len(p["errors"]))
         if p["errors"]:
-            first = "\n".join(f"Linha {n}: {m}" for n, m in p["errors"][:4])
+            first = "\n".join(t("dialog.import_line_error", line=n, message=m) for n, m in p["errors"][:4])
             text += "\n" + first + ("\n…" if len(p["errors"]) > 4 else "")
         self.summary.configure(text=text)
 
     def save(self):
         if not self.prep:
-            raise ValueError("Escolha um arquivo CSV válido.")
+            raise ValueError(t("dialog.invalid_csv"))
         result = importer.commit_import(self.prep["rows"], self.account.get_id(), self.skip.get())
         self.result = result

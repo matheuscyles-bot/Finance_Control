@@ -450,5 +450,14 @@
   "schedule.no_match": "この条件に一致するものはありません。",
   "schedule.rules_title": "マイ定期取引",
   "schedule.next_on": "次回: {date}",
-  "schedule.projected": "予定"
+  "schedule.projected": "予定",
+  "dialog.edit_transaction": "取引を編集",
+  "dialog.edit_transfer": "振替を編集",
+  "dialog.edit_account": "口座を編集",
+  "dialog.edit_recurring": "定期項目を編集",
+  "dialog.name": "名前",
+  "dialog.type": "種類",
+  "dialog.frequency": "頻度",
+  "dialog.delete_category": "カテゴリを削除",
+  "dialog.all_files": "すべてのファイル"
 }

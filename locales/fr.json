@@ -450,5 +450,14 @@
   "schedule.no_match": "Aucun résultat avec ces filtres.",
   "schedule.rules_title": "Mes récurrences",
   "schedule.next_on": "Prochaine : {date}",
-  "schedule.projected": "Prévu"
+  "schedule.projected": "Prévu",
+  "dialog.edit_transaction": "Modifier l'opération",
+  "dialog.edit_transfer": "Modifier le virement",
+  "dialog.edit_account": "Modifier le compte",
+  "dialog.edit_recurring": "Modifier la récurrence",
+  "dialog.name": "Nom",
+  "dialog.type": "Type",
+  "dialog.frequency": "Fréquence",
+  "dialog.delete_category": "Supprimer la catégorie",
+  "dialog.all_files": "Tous les fichiers"
 }

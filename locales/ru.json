@@ -450,5 +450,14 @@
   "schedule.no_match": "По этим фильтрам ничего не найдено.",
   "schedule.rules_title": "Мои повторы",
   "schedule.next_on": "Следующая: {date}",
-  "schedule.projected": "Прогноз"
+  "schedule.projected": "Прогноз",
+  "dialog.edit_transaction": "Изменить операцию",
+  "dialog.edit_transfer": "Изменить перевод",
+  "dialog.edit_account": "Изменить счёт",
+  "dialog.edit_recurring": "Изменить повторение",
+  "dialog.name": "Название",
+  "dialog.type": "Тип",
+  "dialog.frequency": "Периодичность",
+  "dialog.delete_category": "Удалить категорию",
+  "dialog.all_files": "Все файлы"
 }

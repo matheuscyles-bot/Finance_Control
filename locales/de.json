@@ -450,5 +450,14 @@
   "schedule.no_match": "Mit diesen Filtern nichts gefunden.",
   "schedule.rules_title": "Meine Daueraufträge",
   "schedule.next_on": "Nächste: {date}",
-  "schedule.projected": "Geplant"
+  "schedule.projected": "Geplant",
+  "dialog.edit_transaction": "Buchung bearbeiten",
+  "dialog.edit_transfer": "Überweisung bearbeiten",
+  "dialog.edit_account": "Konto bearbeiten",
+  "dialog.edit_recurring": "Wiederkehrenden Eintrag bearbeiten",
+  "dialog.name": "Name",
+  "dialog.type": "Typ",
+  "dialog.frequency": "Häufigkeit",
+  "dialog.delete_category": "Kategorie löschen",
+  "dialog.all_files": "Alle Dateien"
 }

@@ -450,5 +450,14 @@
   "schedule.no_match": "Nothing found with these filters.",
   "schedule.rules_title": "My recurring",
   "schedule.next_on": "Next: {date}",
-  "schedule.projected": "Projected"
+  "schedule.projected": "Projected",
+  "dialog.edit_transaction": "Edit transaction",
+  "dialog.edit_transfer": "Edit transfer",
+  "dialog.edit_account": "Edit account",
+  "dialog.edit_recurring": "Edit recurring item",
+  "dialog.name": "Name",
+  "dialog.type": "Type",
+  "dialog.frequency": "Frequency",
+  "dialog.delete_category": "Delete category",
+  "dialog.all_files": "All files"
 }
