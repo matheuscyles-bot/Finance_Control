@@ -4,14 +4,15 @@ Controle financeiro pessoal para desktop (Python + Tkinter + SQLite). Funciona 1
 **nenhum dado financeiro sai do seu computador** e o app não usa internet.
 
 ## O que o app faz
-- **Painel**: saldo total, receitas/despesas/resultado do mês (com comparação ao mês anterior), gráfico de 6 meses, despesas por categoria, orçamentos e últimas movimentações.
+- **Visão geral** (painel): receitas do mês (com comparação ao mês anterior), saldo total de hoje, % do orçamento do mês, gráfico de despesas (6 ou 12 meses), maiores gastos do mês, meta do mês, despesas por categoria e próximos vencimentos.
+- **Vencimentos**: contas do mês com coluna "Lançado" para as despesas já lançadas.
 - **Movimentações**: cadastro rápido, busca (sem diferenciar acentos), filtros (período, tipo, categoria, conta), ordenação, duplicar, editar, excluir **com desfazer**, parcelamento (valor dividido sem perder centavos), exportar/importar CSV.
 - **Contas e transferências**: várias contas (corrente, poupança, dinheiro, cartão) com saldo próprio. Transferências movem dinheiro entre contas e **não contam como receita nem despesa**.
 - **Orçamentos** mensais por categoria, com copiar do mês anterior.
 - **Relatórios**: qualquer período, por conta, comparação com o período anterior e ranking de categorias.
-- **Recorrências**: aluguel, assinaturas, salário… criados automaticamente (semanal/mensal/anual), sem duplicar.
+- **Agenda**: recorrências (aluguel, assinaturas, salário… semanal/mensal/anual), criadas automaticamente sem duplicar, com pausar, editar e excluir. Substitui a antiga tela Recorrências.
 - **Backup**: automático (1 por dia + 1 antes de cada atualização do banco), manual, cópia e restauração.
-- Tema escuro premium como padrão em instalações novas (a preferência existente é preservada), tema claro opcional, moedas £ € $ R$, atalhos (⌘N nova movimentação, ⌘F buscar, ⌘1…6 telas, ⌘, configurações).
+- Tema escuro premium como padrão em instalações novas (a preferência existente é preservada), tema claro opcional, moedas £ € $ R$, interface em 9 idiomas (pt-BR, en, es, fr, it, de, ru, zh-CN, ja), atalhos (⌘N nova movimentação, ⌘F buscar, ⌘1…7 telas, ⌘, configurações).
 
 ## Instalar no Mac (sem VS Code)
 1. Instale o **Python 3.12** de <https://www.python.org/downloads/macos/> (uma única vez; o Python que já vem no Mac tem um Tk antigo e não serve).
@@ -36,9 +37,9 @@ Gere o app novamente (`Criar_App_Mac.command`). Os dados ficam fora do app e nun
 python3.12 -m backend.main               # executar
 python3.12 -m unittest discover -s tests -t .   # testes automatizados
 ```
-Os testes de interface precisam de tela (em servidor: `xvfb-run -a ...`); sem tela eles são pulados. Só biblioteca padrão; `requirements-build.txt` é usado apenas para empacotar.
+Os testes de interface precisam de tela (em servidor: `xvfb-run -a ...`); sem tela eles são pulados. Dependência de execução: Pillow (`requirements.txt`); `requirements-build.txt` é usado apenas para empacotar.
 
-Estrutura: `backend/` (entrada do app, configurações, regras de negócio e utilitários) · `frontend/` (telas) · `database/` (SQLite, migrações e backup) · `tests/` · `packaging/` · `_arquivo_antigo/` (arquivos da versão 1 que não eram usados, guardados por segurança).
+Estrutura: `backend/` (entrada do app, configurações, regras de negócio e utilitários) · `frontend/` (telas) · `database/` (SQLite, migrações e backup) · `tests/` · `packaging/` · `locales/` (textos dos 9 idiomas).
 
 ## Regras importantes
 - Valores guardados como inteiros (centavos); entrada aceita `25,50`, `25.50`, `1.234,56`, `1,234.56`; rejeita zero, negativos, letras e mais de 2 casas.
