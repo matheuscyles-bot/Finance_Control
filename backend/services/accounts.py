@@ -96,7 +96,7 @@ def _name_taken(conn, name, ignore_id=None):
 
 
 def add_account(name, account_type="checking", opening_balance="0"):
-    name = validate_name(name, "O nome da conta")
+    name = validate_name(name, t("validation.label_account_name"))
     account_type = _validate_type(account_type)
     opening = validate_optional_amount(opening_balance)
     with get_connection() as conn:
@@ -109,7 +109,7 @@ def add_account(name, account_type="checking", opening_balance="0"):
 
 
 def update_account(account_id, name, account_type, opening_balance="0"):
-    name = validate_name(name, "O nome da conta")
+    name = validate_name(name, t("validation.label_account_name"))
     account_type = _validate_type(account_type)
     opening = validate_optional_amount(opening_balance)
     with get_connection() as conn:

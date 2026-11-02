@@ -501,5 +501,15 @@
   "error.category_target_invalid": "请选择有效的目标分类。",
   "error.category_target_kind": "目标分类必须是相同类型。",
   "error.category_budget_conflict": "目标分类在一个或多个月份已有预算。请先调整这些预算再移动分类。",
-  "common.default_account": "主账户"
+  "common.default_account": "主账户",
+  "validation.label_description": "描述",
+  "validation.label_name": "名称",
+  "validation.label_account_name": "账户名称",
+  "validation.label_category_name": "分类名称",
+  "validation.field_invalid": "{label}无效。",
+  "validation.field_required": "{label}不能为空。",
+  "validation.field_too_long": "{label}最多 {limit} 个字符。",
+  "validation.notes_too_long": "备注最多 {limit} 个字符。",
+  "validation.kind_invalid": "交易类型无效。",
+  "validation.date_range_invalid": "开始日期不能晚于结束日期。"
 }

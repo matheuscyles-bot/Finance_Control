@@ -501,5 +501,15 @@
   "error.category_target_invalid": "Choose a valid target category.",
   "error.category_target_kind": "The target category must be of the same type.",
   "error.category_budget_conflict": "The target category already has a budget for one or more months. Adjust those budgets before moving the category.",
-  "common.default_account": "Main account"
+  "common.default_account": "Main account",
+  "validation.label_description": "The description",
+  "validation.label_name": "The name",
+  "validation.label_account_name": "The account name",
+  "validation.label_category_name": "The category name",
+  "validation.field_invalid": "{label} is invalid.",
+  "validation.field_required": "{label} can't be empty.",
+  "validation.field_too_long": "{label} must be at most {limit} characters.",
+  "validation.notes_too_long": "Notes must be at most {limit} characters.",
+  "validation.kind_invalid": "Invalid transaction type.",
+  "validation.date_range_invalid": "The start date can't be after the end date."
 }

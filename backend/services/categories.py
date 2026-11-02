@@ -33,7 +33,7 @@ def _name_taken(conn, name, kind, ignore_id=None):
 
 
 def add_category(name, kind):
-    name = validate_name(name, "O nome da categoria")
+    name = validate_name(name, t("validation.label_category_name"))
     validate_kind(kind)
     with get_connection() as conn:
         if _name_taken(conn, name, kind):
@@ -48,7 +48,7 @@ def add_category(name, kind):
 
 
 def rename_category(category_id, name):
-    name = validate_name(name, "O nome da categoria")
+    name = validate_name(name, t("validation.label_category_name"))
     with get_connection() as conn:
         row = conn.execute(
             "SELECT kind FROM categories WHERE id = ?", (category_id,)

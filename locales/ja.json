@@ -501,5 +501,15 @@
   "error.category_target_invalid": "有効な移動先カテゴリを選んでください。",
   "error.category_target_kind": "移動先のカテゴリは同じ種類である必要があります。",
   "error.category_budget_conflict": "移動先のカテゴリには一部の月にすでに予算があります。カテゴリを移す前に予算を調整してください。",
-  "common.default_account": "メイン口座"
+  "common.default_account": "メイン口座",
+  "validation.label_description": "説明",
+  "validation.label_name": "名前",
+  "validation.label_account_name": "口座名",
+  "validation.label_category_name": "カテゴリ名",
+  "validation.field_invalid": "{label}が無効です。",
+  "validation.field_required": "{label}は空にできません。",
+  "validation.field_too_long": "{label}は最大{limit}文字までです。",
+  "validation.notes_too_long": "メモは最大{limit}文字までです。",
+  "validation.kind_invalid": "取引の種類が無効です。",
+  "validation.date_range_invalid": "開始日は終了日より後にできません。"
 }

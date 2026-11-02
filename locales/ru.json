@@ -501,5 +501,15 @@
   "error.category_target_invalid": "Выберите корректную целевую категорию.",
   "error.category_target_kind": "Целевая категория должна быть того же типа.",
   "error.category_budget_conflict": "У целевой категории уже есть бюджет на один или несколько месяцев. Измените эти бюджеты перед переносом категории.",
-  "common.default_account": "Основной счёт"
+  "common.default_account": "Основной счёт",
+  "validation.label_description": "Описание",
+  "validation.label_name": "Название",
+  "validation.label_account_name": "Название счёта",
+  "validation.label_category_name": "Название категории",
+  "validation.field_invalid": "{label}: недопустимое значение.",
+  "validation.field_required": "{label}: поле не может быть пустым.",
+  "validation.field_too_long": "{label}: не больше {limit} символов.",
+  "validation.notes_too_long": "Заметки не должны превышать {limit} символов.",
+  "validation.kind_invalid": "Недопустимый тип операции.",
+  "validation.date_range_invalid": "Дата начала не может быть позже даты окончания."
 }

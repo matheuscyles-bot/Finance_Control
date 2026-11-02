@@ -501,5 +501,15 @@
   "error.category_target_invalid": "Scegli una categoria di destinazione valida.",
   "error.category_target_kind": "La categoria di destinazione deve essere dello stesso tipo.",
   "error.category_budget_conflict": "La categoria di destinazione ha già un budget per uno o più mesi. Modifica questi budget prima di spostare la categoria.",
-  "common.default_account": "Conto principale"
+  "common.default_account": "Conto principale",
+  "validation.label_description": "La descrizione",
+  "validation.label_name": "Il nome",
+  "validation.label_account_name": "Il nome del conto",
+  "validation.label_category_name": "Il nome della categoria",
+  "validation.field_invalid": "{label} non è valido(a).",
+  "validation.field_required": "{label} non può essere vuoto(a).",
+  "validation.field_too_long": "{label} deve avere al massimo {limit} caratteri.",
+  "validation.notes_too_long": "Le note devono avere al massimo {limit} caratteri.",
+  "validation.kind_invalid": "Tipo di movimento non valido.",
+  "validation.date_range_invalid": "La data iniziale non può essere successiva a quella finale."
 }
