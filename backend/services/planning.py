@@ -119,18 +119,23 @@ def upcoming(days=DUE_SOON_DAYS, today=None):
                            (day + timedelta(days=days)).isoformat())
 
 
-def account_activity():
-    """{id da conta: data ISO da última movimentação ou transferência}."""
+def account_activity(today=None):
+    """{id da conta: data ISO da última movimentação ou transferência até hoje}."""
+    today = today or date.today().isoformat()
     rows = fetch_all(
         """
         SELECT account_id, MAX(day) AS last FROM (
-            SELECT account_id, MAX(transaction_date) AS day FROM transactions GROUP BY account_id
+            SELECT account_id, MAX(transaction_date) AS day FROM transactions
+            WHERE transaction_date <= :today GROUP BY account_id
             UNION ALL
-            SELECT from_account_id, MAX(transfer_date) FROM transfers GROUP BY from_account_id
+            SELECT from_account_id, MAX(transfer_date) FROM transfers
+            WHERE transfer_date <= :today GROUP BY from_account_id
             UNION ALL
-            SELECT to_account_id, MAX(transfer_date) FROM transfers GROUP BY to_account_id
+            SELECT to_account_id, MAX(transfer_date) FROM transfers
+            WHERE transfer_date <= :today GROUP BY to_account_id
         ) GROUP BY account_id
-        """
+        """,
+        {"today": today},
     )
     return {r["account_id"]: r["last"] for r in rows if r["last"]}
 
