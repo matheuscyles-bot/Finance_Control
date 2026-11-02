@@ -34,6 +34,7 @@ class TransactionsPage(Page):
         self._search_job = None
         self.query = tk.StringVar()
         self.query.trace_add("write", lambda *_: self._debounce())
+        self.bind("<Destroy>", self._cancel_search, add="+")
 
         # foot vai primeiro para ficar colado embaixo
         self.foot = tk.Frame(self, bg=c("bg"))
@@ -114,6 +115,15 @@ class TransactionsPage(Page):
         if self._search_job:
             self.after_cancel(self._search_job)
         self._search_job = self.after(250, self._reset)
+
+    def _cancel_search(self, _e=None):
+        # a busca adiada não pode rodar depois que a página foi destruída
+        if self._search_job:
+            try:
+                self.after_cancel(self._search_job)
+            except tk.TclError:
+                pass
+            self._search_job = None
 
     def _sort_changed(self):
         self.sort = self.sort_select.get_id()

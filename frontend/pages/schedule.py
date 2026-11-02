@@ -166,6 +166,7 @@ class SchedulePage(Page):
         self._grid_job = None
         self._grid_size = None
         self.calendar_canvas.bind("<Configure>", self._on_grid_configure)
+        self.calendar_canvas.bind("<Destroy>", self._cancel_grid_job, add="+")
 
     def _on_grid_configure(self, e):
         # Agrupa rajadas de resize e ignora eventos sem mudança de tamanho.
@@ -174,6 +175,15 @@ class SchedulePage(Page):
         if self._grid_job is not None:
             self.after_cancel(self._grid_job)
         self._grid_job = self.after(40, self._grid_now)
+
+    def _cancel_grid_job(self, _e=None):
+        # o redesenho agendado não pode rodar depois que o canvas foi destruído
+        if self._grid_job is not None:
+            try:
+                self.after_cancel(self._grid_job)
+            except tk.TclError:
+                pass
+            self._grid_job = None
 
     def _grid_now(self):
         self._grid_job = None
