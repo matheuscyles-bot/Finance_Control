@@ -34,3 +34,7 @@
 - Se um erro se repetir 2 vezes, pare e explique a causa em vez de tentar às cegas.
 - Saída de comandos longos: mostre só o final ou as linhas de erro.
 - Tkinter: nunca use `self._w` em widgets (nome interno do Tk). Chaves novas de idioma vão nos 9 catálogos.
+
+## PENDENCIAS 
+- Pendência (planning.bills_board): despesa de hoje cai em "pago" (o futuro começa amanhã) e não há status de pago. Decidir na página Vencimentos: renomear coluna ou criar campo paid (migração v4).
+- Pendência i18n: frontend/dialogs.py, erros de backend/services/* e "Sem categoria" (reports.py, planning.py) estão fixos em português.
