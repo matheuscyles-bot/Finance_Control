@@ -437,5 +437,5 @@ class AccountsPage(Page):
             def run():
                 deleted = accounts.delete_transfer(row["id"])
                 self.app.after_change()
-                self.app.undoable("Transferência excluída.", lambda: accounts.restore_transfer(deleted))
+                self.app.undoable(t("toast.transfer_deleted"), lambda: accounts.restore_transfer(deleted))
             self.guarded(run)

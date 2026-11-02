@@ -6,7 +6,6 @@ import calendar
 import tkinter as tk
 from datetime import date, timedelta
 
-from backend import config
 from backend.services import planning, recurring
 from frontend import dialogs, motion
 from frontend.draw import round_rect
@@ -346,7 +345,7 @@ class SchedulePage(Page):
               "income" if active else "muted", bg=f).pack(side="right")
         label(b, money(r["amount"], signed=True), 20, "medium", "income" if income else "text",
               bg=f).pack(fill="x", pady=(10, 0))
-        label(b, clip(f"{config.FREQUENCIES[r['frequency']]} · {r['account_name']}", 34), 10,
+        label(b, clip(f"{t('common.frequency.' + r['frequency'])} · {r['account_name']}", 34), 10,
               color="muted", bg=f).pack(fill="x", pady=(2, 0))
         label(b, t("schedule.next_on", date=formatters.format_date(r["next_date"])), 10,
               color="muted", bg=f).pack(fill="x")
@@ -378,12 +377,12 @@ class SchedulePage(Page):
     def new(self):
         if dialogs.RecurringDialog(self.app).wait():
             self.app.after_change(run_recurring=True)
-            self.app.toast("Recorrência criada.", "success")
+            self.app.toast(t("toast.recurring_created"), "success")
 
     def edit(self, row):
         if dialogs.RecurringDialog(self.app, row).wait():
             self.app.after_change(run_recurring=True)
-            self.app.toast("Recorrência atualizada.", "success")
+            self.app.toast(t("toast.recurring_updated"), "success")
 
     def toggle(self, row):
         self.guarded(lambda: (recurring.set_active(row["id"], not row["active"]),
@@ -391,10 +390,10 @@ class SchedulePage(Page):
 
     def delete(self, row):
         if dialogs.confirm(
-                self.app, "Excluir recorrência",
-                f"Excluir “{row['description']}”? Os lançamentos já criados são mantidos."):
+                self.app, t("recurring.delete_title"),
+                t("recurring.delete_prompt", description=row["description"])):
             def run():
                 recurring.delete_recurring(row["id"])
                 self.app.after_change()
-                self.app.toast("Recorrência excluída.", "success")
+                self.app.toast(t("toast.recurring_deleted"), "success")
             self.guarded(run)

@@ -519,5 +519,9 @@
   "transactions.kpi_net": "结余",
   "transactions.delete_title": "删除交易",
   "budgets.remove_title": "移除预算",
-  "budgets.spent_of": "{spent} / {budget}"
+  "budgets.spent_of": "{spent} / {budget}",
+  "recurring.delete_title": "删除定期项目",
+  "recurring.delete_prompt": "删除“{description}”？已创建的交易会保留。",
+  "toast.transfer_deleted": "转账已删除。",
+  "settings.sqlite_database": "SQLite 数据库"
 }

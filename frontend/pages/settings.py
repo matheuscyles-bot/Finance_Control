@@ -203,7 +203,7 @@ class SettingsPage(Page):
             path = filedialog.asksaveasfilename(
                 parent=self.app.root, title=t("settings.save_copy"), defaultextension=".db",
                 initialfile=f"finance_control_copia_{formatters.today_iso()}.db",
-                filetypes=[("Banco SQLite", "*.db")])
+                filetypes=[(t("settings.sqlite_database"), "*.db")])
             if path:
                 backup.save_copy(path)
                 self.app.toast(t("toast.copy_saved"), "success")
@@ -213,7 +213,7 @@ class SettingsPage(Page):
         def run():
             chosen = path or filedialog.askopenfilename(
                 parent=self.app.root, title=t("settings.restore_file"),
-                filetypes=[("Banco SQLite", "*.db"), ("Todos", "*.*")])
+                filetypes=[(t("settings.sqlite_database"), "*.db"), (t("dialog.all_files"), "*.*")])
             if not chosen:
                 return
             if dialogs.confirm(

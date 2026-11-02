@@ -519,5 +519,9 @@
   "transactions.kpi_net": "Net result",
   "transactions.delete_title": "Delete transaction",
   "budgets.remove_title": "Remove budget",
-  "budgets.spent_of": "{spent} of {budget}"
+  "budgets.spent_of": "{spent} of {budget}",
+  "recurring.delete_title": "Delete recurring item",
+  "recurring.delete_prompt": "Delete “{description}”? Transactions already created are kept.",
+  "toast.transfer_deleted": "Transfer deleted.",
+  "settings.sqlite_database": "SQLite database"
 }

@@ -519,5 +519,9 @@
   "transactions.kpi_net": "Ergebnis",
   "transactions.delete_title": "Buchung löschen",
   "budgets.remove_title": "Budget entfernen",
-  "budgets.spent_of": "{spent} von {budget}"
+  "budgets.spent_of": "{spent} von {budget}",
+  "recurring.delete_title": "Wiederkehrenden Eintrag löschen",
+  "recurring.delete_prompt": "„{description}“ löschen? Bereits erstellte Buchungen bleiben erhalten.",
+  "toast.transfer_deleted": "Überweisung gelöscht.",
+  "settings.sqlite_database": "SQLite-Datenbank"
 }

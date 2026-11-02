@@ -266,7 +266,7 @@ class AccountDialog(Dialog):
         self.account = account
         super().__init__(app, t("dialog.edit_account") if account else t("common.new_account"), width=440)
         self.name = self.field(t("dialog.name"), lambda p: ttk.Entry(p, font=font(11)))
-        types = list(config.ACCOUNT_TYPES.items())
+        types = [(k, t(f"common.account_type.{k}")) for k in config.ACCOUNT_TYPES]
         self.type = self.field(t("dialog.type"), lambda p: ChoiceCombo(p, types, width=30))
         self.opening = self.field(
             t("dialog.opening_balance"), lambda p: ttk.Entry(p, font=font(11)),
@@ -337,7 +337,7 @@ class RecurringDialog(Dialog):
         f1 = tk.Frame(row2, bg=c("surface"))
         f1.pack(side="left", padx=(0, 12))
         label(f1, t("dialog.frequency"), 11, "bold", "muted").pack(fill="x", pady=(0, 3))
-        self.frequency = ChoiceCombo(f1, list(config.FREQUENCIES.items()), width=11)
+        self.frequency = ChoiceCombo(f1, [(k, t(f"common.frequency.{k}")) for k in config.FREQUENCIES], width=11)
         self.frequency.pack()
         self.frequency.set_id("monthly")
         f2 = tk.Frame(row2, bg=c("surface"))

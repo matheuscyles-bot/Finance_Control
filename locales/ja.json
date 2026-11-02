@@ -519,5 +519,9 @@
   "transactions.kpi_net": "収支",
   "transactions.delete_title": "取引を削除",
   "budgets.remove_title": "予算を削除",
-  "budgets.spent_of": "{spent} / {budget}"
+  "budgets.spent_of": "{spent} / {budget}",
+  "recurring.delete_title": "定期項目を削除",
+  "recurring.delete_prompt": "「{description}」を削除しますか？作成済みの取引は残ります。",
+  "toast.transfer_deleted": "振替を削除しました。",
+  "settings.sqlite_database": "SQLite データベース"
 }

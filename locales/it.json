@@ -519,5 +519,9 @@
   "transactions.kpi_net": "Risultato",
   "transactions.delete_title": "Elimina movimento",
   "budgets.remove_title": "Rimuovi budget",
-  "budgets.spent_of": "{spent} di {budget}"
+  "budgets.spent_of": "{spent} di {budget}",
+  "recurring.delete_title": "Elimina ricorrenza",
+  "recurring.delete_prompt": "Eliminare “{description}”? I movimenti già creati vengono mantenuti.",
+  "toast.transfer_deleted": "Trasferimento eliminato.",
+  "settings.sqlite_database": "Database SQLite"
 }

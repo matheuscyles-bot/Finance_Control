@@ -519,5 +519,9 @@
   "transactions.kpi_net": "Итог",
   "transactions.delete_title": "Удалить операцию",
   "budgets.remove_title": "Удалить бюджет",
-  "budgets.spent_of": "{spent} из {budget}"
+  "budgets.spent_of": "{spent} из {budget}",
+  "recurring.delete_title": "Удалить повторение",
+  "recurring.delete_prompt": "Удалить «{description}»? Уже созданные операции сохранятся.",
+  "toast.transfer_deleted": "Перевод удалён.",
+  "settings.sqlite_database": "База данных SQLite"
 }

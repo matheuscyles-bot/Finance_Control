@@ -519,5 +519,9 @@
   "transactions.kpi_net": "Résultat",
   "transactions.delete_title": "Supprimer l'opération",
   "budgets.remove_title": "Supprimer le budget",
-  "budgets.spent_of": "{spent} sur {budget}"
+  "budgets.spent_of": "{spent} sur {budget}",
+  "recurring.delete_title": "Supprimer la récurrence",
+  "recurring.delete_prompt": "Supprimer « {description} » ? Les opérations déjà créées sont conservées.",
+  "toast.transfer_deleted": "Virement supprimé.",
+  "settings.sqlite_database": "Base de données SQLite"
 }

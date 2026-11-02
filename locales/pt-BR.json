@@ -519,5 +519,9 @@
   "transactions.kpi_net": "Resultado",
   "transactions.delete_title": "Excluir movimentação",
   "budgets.remove_title": "Remover orçamento",
-  "budgets.spent_of": "{spent} de {budget}"
+  "budgets.spent_of": "{spent} de {budget}",
+  "recurring.delete_title": "Excluir recorrência",
+  "recurring.delete_prompt": "Excluir “{description}”? Os lançamentos já criados são mantidos.",
+  "toast.transfer_deleted": "Transferência excluída.",
+  "settings.sqlite_database": "Banco SQLite"
 }
