@@ -57,6 +57,9 @@ class PipelinePage(Page):
     # ---------------------------------------------------------------- dados
     def refresh(self):
         super().refresh()
+        # conta arquivada deixa de ser filtro: volta para 'todas'
+        if self.account_id not in {a["id"] for a in accounts.list_accounts()}:
+            self.account_id = None
         self._build_chips()
         self._load()
         self._render()
@@ -247,7 +250,8 @@ class PipelinePage(Page):
         def run():
             rows = [{"transaction_date": r["date"], "kind": r["kind"], "description": r["description"],
                      "category_name": r["category_name"], "account_name": r["account_name"],
-                     "amount": r["amount"], "notes": ""} for _, r in self._visible()]
+                     "amount": r["amount"], "notes": ""} for _, r in self._visible()
+                    if r["source"] == "transaction"]
             if not rows:
                 self.app.toast(t("pipeline.no_match"))
                 return
