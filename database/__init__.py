@@ -481,9 +481,17 @@ def restore_backup(path):
     path = Path(path)
     if not path.exists():
         raise DatabaseError("O arquivo de backup não foi encontrado.")
+    if DB_PATH.exists() and path.resolve() == DB_PATH.resolve():
+        raise DatabaseError("Escolha um backup diferente do banco em uso.")
 
     try:
         source = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
+    except sqlite3.DatabaseError as exc:
+        raise DatabaseError(
+            "Não foi possível ler o arquivo selecionado como um banco de dados."
+        ) from exc
+
+    try:
         source.row_factory = sqlite3.Row
         try:
             if source.execute("PRAGMA quick_check").fetchone()[0] != "ok":
@@ -497,21 +505,33 @@ def restore_backup(path):
                 raise DatabaseError(
                     "Este backup foi criado por uma versão mais nova do app."
                 )
+        except sqlite3.DatabaseError as exc:
+            raise DatabaseError(
+                "Não foi possível ler o arquivo selecionado como um banco de dados."
+            ) from exc
 
-            if DB_PATH.exists():
-                create_backup("antes_de_restaurar")
+        if DB_PATH.exists():
+            create_backup("antes_de_restaurar")
 
+        try:
             destination = sqlite3.connect(DB_PATH, timeout=10)
             try:
-                source.backup(destination)
+                # pages=-1: tudo numa única transação; se falhar, o banco atual fica intacto
+                source.backup(destination, pages=-1)
+                if destination.execute("PRAGMA quick_check").fetchone()[0] != "ok":
+                    raise DatabaseError(
+                        "O banco restaurado apresentou erros de integridade. "
+                        f"Use a cópia 'antes_de_restaurar' em {BACKUP_DIR}."
+                    )
             finally:
                 destination.close()
-        finally:
-            source.close()
-    except sqlite3.DatabaseError as exc:
-        raise DatabaseError(
-            "Não foi possível ler o arquivo selecionado como um banco de dados."
-        ) from exc
+        except sqlite3.DatabaseError as exc:
+            raise DatabaseError(
+                "Não foi possível gravar o banco restaurado. Feche outras janelas "
+                "do app e tente de novo. O banco anterior foi preservado."
+            ) from exc
+    finally:
+        source.close()
 
     init_db()  # migra caso o backup seja de uma versão anterior
 
