@@ -15,7 +15,6 @@ CURRENCY_OPTIONS = ["£", "€", "$", "R$"]
 DEFAULT_THEME = "dark"
 THEMES = {"light": "Claro", "dark": "Escuro"}
 
-DEFAULT_ACCOUNT_NAME = "Conta principal"
 ACCOUNT_TYPES = {
     "checking": "Conta corrente",
     "savings": "Poupança",

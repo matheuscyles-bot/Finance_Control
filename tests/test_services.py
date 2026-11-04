@@ -1,7 +1,6 @@
 import csv
 import sqlite3
 import unittest
-from datetime import date
 
 from tests.base import DbTestCase
 import database
@@ -125,7 +124,8 @@ class AccountTests(DbTestCase):
         totals = tx.get_totals("2026-10-01", "2026-10-31")
         self.assertEqual((totals["income"], totals["expense"]), (100000, 0))
         by_name = {a["name"]: a for a in accounts.list_accounts(today="2026-10-31")}
-        self.assertEqual(by_name["Conta principal"]["balance"], 70000)
+        default = accounts.get_account(accounts.get_default_account_id(), today="2026-10-31")
+        self.assertEqual(by_name[default["name"]]["balance"], 70000)
         self.assertEqual(by_name["Poupança"]["balance"], 35000)
         self.assertEqual(accounts.total_balance("2026-10-31"), 105000)  # soma preservada
         rep = reports.category_report("2026-10-01", "2026-10-31", "expense")
@@ -274,6 +274,16 @@ class ImporterTests(DbTestCase):
             rows = list(csv.reader(f, delimiter=";"))
         self.assertEqual(rows[1][5], "1234,56")
         self.assertTrue(rows[1][2].startswith("'"))   # fórmula neutralizada
+
+    def test_import_remove_apostrofo_de_formula(self):
+        path = self.write(
+            "Data;Descrição;Valor;Observações\n"
+            "02/10/2026;'-Café;-5,00;'=nota\n"
+            "03/10/2026;Isso é d'água;-1,00;\n")
+        prep = importer.prepare_import(path, self.account)
+        self.assertEqual(prep["rows"][0]["description"], "-Café")
+        self.assertEqual(prep["rows"][0]["notes"], "=nota")
+        self.assertEqual(prep["rows"][1]["description"], "Isso é d'água")    
 
 
 class BackupMigrationTests(DbTestCase):

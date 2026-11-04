@@ -3,6 +3,7 @@
 from datetime import date, datetime, timedelta
 
 from database import fetch_all, fetch_one
+from backend.utils.i18n import t
 from backend.services import accounts, budgets
 from backend.utils.formatters import month_range, shift_month
 from backend.utils.validators import validate_date, validate_month
@@ -21,7 +22,7 @@ def category_report(start_date, end_date, kind="expense", account_id=None):
     rows = fetch_all(
         f"""
         SELECT t.category_id AS category_id,
-               COALESCE(c.name, 'Sem categoria') AS category_name,
+               c.name AS category_name,
                SUM(t.amount) AS total, COUNT(*) AS count
         FROM transactions t LEFT JOIN categories c ON c.id = t.category_id
         WHERE t.kind = ? AND t.transaction_date BETWEEN ? AND ?{account_clause}
@@ -34,7 +35,7 @@ def category_report(start_date, end_date, kind="expense", account_id=None):
     return [
         {
             "category_id": r["category_id"],
-            "category_name": r["category_name"],
+            "category_name": r["category_name"] or t("common.uncategorized"),
             "total": r["total"],
             "count": r["count"],
             "share": (r["total"] / grand) if grand else 0.0,
@@ -109,7 +110,7 @@ def previous_period(start_date, end_date):
     start = datetime.strptime(validate_date(start_date), "%Y-%m-%d").date()
     end = datetime.strptime(validate_date(end_date), "%Y-%m-%d").date()
     if start > end:
-        raise ValueError("A data inicial deve ser anterior à final.")
+        raise ValueError(t("error.date_range_order"))
     month = start.strftime("%Y-%m")
     if month_range(month) == (start.isoformat(), end.isoformat()):
         return month_range(shift_month(month, -1))

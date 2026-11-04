@@ -9,8 +9,6 @@ jobs:
         include:
           - os: macos-15-intel   # Macs com processador Intel
             suffix: intel
-          - os: macos-latest     # Macs com Apple Silicon (M1+)
-            suffix: apple-silicon
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

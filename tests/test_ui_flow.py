@@ -1,6 +1,7 @@
 """Fluxo de ponta a ponta pela interface real (precisa de tkinter e de uma
 tela; em servidor sem tela use ``xvfb-run``). Usa banco temporário."""
 
+import json
 import shutil
 import tempfile
 import unittest
@@ -48,6 +49,28 @@ class UiFlowTests(unittest.TestCase):
             self.app.navigate(key)
             self.app.root.update()
         self.assertTrue(self.app.is_empty())
+
+    def test_pipeline_board_and_list(self):
+        from datetime import timedelta
+        from backend.services import accounts, categories
+        from backend.services import transactions as tx
+        from frontend.pages.pipeline import STAGE_KEYS
+        account = accounts.add_account("Conta")
+        category = categories.add_category("Contas", "expense")
+        tx.add_transaction("Luz", "80", "expense", category, (date.today() + timedelta(days=3)).isoformat(),
+                           account_id=account)
+        self.app.navigate("pipeline")
+        page = self.app.pages["pipeline"]
+        self.assertEqual(len(page.groups["due_soon"]), 1)
+        self.assertEqual(page.kpis[1]["value"], 8000)
+        page.query.set("luz")
+        self.assertEqual(len(page._visible()), 1)
+        page.query.set("zzz")
+        self.assertEqual(page._visible(), [])
+        page.query.set("")
+        page._set_view("list")
+        self.assertEqual(len(page.table.tree.get_children()), 1)
+        self.assertEqual(sorted(page.groups), sorted(STAGE_KEYS))
 
     def test_transaction_flow(self):
         from backend.services import transactions as tx
@@ -147,6 +170,26 @@ class UiFlowTests(unittest.TestCase):
         self.assertEqual(settings.get_currency_symbol(), "R$")
         self.assertEqual(settings.get_theme(), "dark")
 
+    def test_language_switch_rebuilds_every_page(self):
+        from backend.utils import i18n
+        from backend.utils.i18n import t
+        from frontend.app import NAV
+
+        for code in i18n.SUPPORTED_LOCALES:
+            with self.subTest(locale=code):
+                self.app.set_language(code)
+                self.app.root.update()
+                for key, *_ in NAV:
+                    self.app.navigate(key)
+                    self.app.root.update()
+                    page = self.app.pages[key]
+                    self.assertEqual(self.app.title_label.cget("text"), t(page.title_key))
+                if i18n._preference_path.exists():
+                    saved = i18n._preference_path.read_text(encoding="utf-8")
+                    self.assertEqual(json.loads(saved)["language"], code)
+                else:
+                    self.assertEqual(i18n.get_locale(), code)
+
     def test_date_picker_takes_and_restores_modal_grab(self):
         dialog = self.dialogs.TransactionDialog(self.app)
         self.app.root.update()
@@ -165,6 +208,60 @@ class UiFlowTests(unittest.TestCase):
         self.app.root.update()
         self.assertEqual(self.app.root.grab_current(), dialog)
         dialog.close()
+
+    def test_accounts_grid_table_filters_and_share(self):
+        from backend.services import accounts
+        checking = accounts.add_account("Nubank", "checking", "1000")  # a conta padrão também existe
+        accounts.add_account("Reserva", "savings", "500")
+        accounts.add_account("Carteira", "cash")
+        total = accounts.total_balance()
+        self.app.navigate("accounts")
+        self.app.root.update()
+        page = self.app.pages["accounts"]
+        self.assertEqual(page.kpis[0]["value"], len(accounts.list_accounts()))
+        self.assertEqual(page.kpis[1]["value"], total)
+        nubank = next(a for a in page.rows if a["id"] == checking)
+        self.assertAlmostEqual(page._share(nubank), nubank["balance"] / total)
+        page.query.set("res")
+        self.assertEqual([a["name"] for a in page._visible()], ["Reserva"])
+        page.query.set("")
+        page._pick_kind("cash")
+        self.assertEqual([a["name"] for a in page._visible()], ["Carteira"])
+        page._pick_kind(None)
+        page._set_view("table")
+        self.app.root.update()
+        self.assertEqual(len(page.accounts_table.tree.get_children()), len(accounts.list_accounts()))
+        page._sort("balance", True)
+        self.assertEqual(page.accounts_table.tree.get_children()[0], str(checking))
+        page.total = 0
+        self.assertEqual(page._share(page.rows[0]), 0.0)
+        page._set_view("grid")
+        self.app.root.update()
+
+    def test_schedule_calendar_list_and_rules(self):
+        from backend.services import accounts, categories, recurring
+        account = accounts.add_account("Conta")
+        category = categories.add_category("Contas", "expense")
+        today = date.today().isoformat()
+        recurring.add_recurring("Aluguel", "1500", "expense", category, account, "monthly", today)
+        self.app.navigate("schedule")
+        self.app.root.update()
+        page = self.app.pages["schedule"]
+        self.assertEqual(len(page.rules), 1)
+        page._pick_day(today)
+        self.assertEqual([r["date"] for r in page.items if r["date"] == today], [today])
+        self.assertEqual(len(page._visible(page._shown)), len(page._shown))
+        page._set_view("list")
+        self.app.root.update()
+        page._set_kind("income")
+        self.assertEqual(page._visible(page.items), [])
+        page._set_kind(None)
+        page.query.set("aluguel")
+        self.assertEqual(len(page._visible(page.items)), 1)
+        page.query.set("")
+        page.toggle(page.rules[0])
+        self.app.root.update()
+        self.assertFalse(recurring.list_recurring()[0]["active"])
 
 
 if __name__ == "__main__":

@@ -1,140 +1,157 @@
-"""Movimentações: busca, filtros, ordenação, edição e exclusão."""
+"""Movimentações: busca, filtros, ordenação e ações por linha. Os totais do
+período aparecem nos KPIs do cabeçalho; a lista é paginada (Carregar mais)."""
 
 import tkinter as tk
 from datetime import date, timedelta
-from tkinter import filedialog, ttk
+from tkinter import filedialog
 
 from backend import config
 from backend.services import accounts, categories, importer, transactions as tx
 from frontend import dialogs
-from frontend.pages.base import Page
-from frontend.theme import MOD, MOD_LABEL, c, font
-from frontend.widgets import (Button, Card, ChoiceCombo, DateField, EmptyState,
-                        SortableTree, label)
+from frontend.pages.base import Page, kpi, money_fmt
+from frontend.pages.dashboard import clip
+from frontend.theme import c, font, mix
+from frontend.ui import CircleButton, Panel, PillSelect, SearchField, popup_menu
+from frontend.widgets import Button, DateField, EmptyState, ScrollFrame, Segmented, label
 from backend.utils import formatters
 from backend.utils.formatters import money
+from backend.utils.i18n import category_label, t
 
-PERIODS = [
-    ("month", "Este mês"), ("last_month", "Mês passado"), ("90", "Últimos 90 dias"),
-    ("year", "Este ano"), ("all", "Todo o período"), ("custom", "Personalizado…"),
-]
+# opção de ordenação -> (coluna, descendente)
+SORTS = {"date_desc": ("date", True), "date_asc": ("date", False),
+         "amount_desc": ("amount", True), "amount_asc": ("amount", False)}
+SORT_KEY = {"date_desc": "transactions.sort_date_desc", "date_asc": "transactions.sort_date_asc",
+            "amount_desc": "transactions.sort_amount_desc", "amount_asc": "transactions.sort_amount_asc"}
 
 
 class TransactionsPage(Page):
-    title = "Movimentações"
+    title_key = "nav.transactions"
 
     def build(self):
         self.limit = config.PAGE_SIZE
-        self.sort_key, self.descending = "date", True
+        self.sort = "date_desc"
         self.rows = []
         self._search_job = None
+        self.query = tk.StringVar()
+        self.query.trace_add("write", lambda *_: self._debounce())
+        self.bind("<Destroy>", self._cancel_search, add="+")
 
-        bar = Card(self, 14, 12)
-        bar.pack(fill="x", padx=32, pady=(0, 14))
-        b = bar.body
-        self.search = tk.StringVar()
-        self.search_entry = ttk.Entry(b, textvariable=self.search, width=8, font=font(11))
-        self.search_entry.grid(row=0, column=0, padx=(0, 10), sticky="ew")
-        b.grid_columnconfigure(0, weight=1)
-        self.search_entry.insert(0, "")
-        self.search.trace_add("write", lambda *a: self._debounce())
-        self.period = ChoiceCombo(b, PERIODS, width=13)
+        # foot vai primeiro para ficar colado embaixo
+        self.foot = tk.Frame(self, bg=c("bg"))
+        self.foot.pack(side="bottom", fill="x", pady=(12, 0))
+        self.summary = label(self.foot, "", 11, bg="bg", color="muted")
+        self.summary.pack(side="left")
+        self.more = Button(self.foot, t("common.load_more"), self._load_more, "secondary", pad=(12, 6))
+
+        self.bar = tk.Frame(self, bg=c("bg"))
+        self.bar.pack(fill="x", pady=(0, 10))
+        self.search_field = SearchField(self.bar, variable=self.query,
+                                        placeholder=t("common.search_placeholder"), width=240, bg=c("bg"))
+        self.search_field.pack(side="left")
+        self.sort_select = PillSelect(self.bar, [(k, t(SORT_KEY[k])) for k in SORTS], icon_name="list",
+                                      bg=c("bg"))
+        self.sort_select.set_id(self.sort)
+        self.sort_select.pack(side="right")
+        self.sort_select.bind("<<ComboboxSelected>>", lambda e: self._sort_changed())
+
+        self.filters = tk.Frame(self, bg=c("bg"))
+        self.filters.pack(fill="x", pady=(0, 14))
+        periods = [
+            ("month", t("common.month_current")),
+            ("last_month", t("common.month_previous")),
+            ("90", t("common.last_90_days")),
+            ("year", t("common.year_current")),
+            ("all", t("common.all_period")),
+            ("custom", t("common.custom")),
+        ]
+        self.period = PillSelect(self.filters, periods, icon_name="calendar-days", bg=c("bg"))
         self.period.set_id("month")
-        self.period.grid(row=0, column=1, padx=(0, 10))
+        self.period.pack(side="left", padx=(0, 10))
         self.period.bind("<<ComboboxSelected>>", lambda e: self._period_changed())
-        self.kind = ChoiceCombo(b, [("all", "Todos os tipos"), ("income", "Receitas"), ("expense", "Despesas")], width=13)
-        self.kind.grid(row=0, column=2, padx=(0, 10))
-        self.kind.bind("<<ComboboxSelected>>", lambda e: self.reload())
-        self.category = ChoiceCombo(b, [], width=18)
-        self.category.grid(row=0, column=3, padx=(0, 10))
-        self.category.bind("<<ComboboxSelected>>", lambda e: self.reload())
-        self.account = ChoiceCombo(b, [], width=16)
-        self.account.grid(row=0, column=4, padx=(0, 10))
-        self.account.bind("<<ComboboxSelected>>", lambda e: self.reload())
-        clear = tk.Label(b, text="Limpar filtros", fg=c("primary"), bg=c("surface"),
-                         font=font(10, "bold"), cursor="hand2")
-        clear.grid(row=0, column=5)
+        self.kind = Segmented(self.filters, [("all", t("common.all_types")), ("income", t("common.income")),
+                                             ("expense", t("common.expense"))],
+                              "all", lambda _v: self._reset(), bg=c("bg"), size=11)
+        self.kind.pack(side="left", padx=(0, 10))
+        self.account = PillSelect(self.filters, [], allow_empty=t("common.all_accounts"), icon_name="wallet",
+                                  bg=c("bg"))
+        self.account.pack(side="left", padx=(0, 10))
+        self.account.bind("<<ComboboxSelected>>", lambda e: self._reset())
+        self.category = PillSelect(self.filters, [], allow_empty=t("common.all_categories"),
+                                   icon_name="layout-grid", bg=c("bg"))
+        self.category.pack(side="left", padx=(0, 10))
+        self.category.bind("<<ComboboxSelected>>", lambda e: self._reset())
+        clear = tk.Label(self.filters, text=t("common.clear_filters"), fg=c("primary"), bg=c("bg"),
+                         font=font(11, "bold"), cursor="hand2")
+        clear.pack(side="left")
         clear.bind("<Button-1>", lambda e: self.clear_filters())
-        self.custom = tk.Frame(b, bg=c("surface"))
-        label(self.custom, "De", 10, color="muted").pack(side="left", padx=(0, 4))
+
+        self.custom = tk.Frame(self, bg=c("bg"))
+        label(self.custom, t("common.from"), 11, color="muted", bg="bg").pack(side="left", padx=(0, 4))
         self.start = DateField(self.custom, width=10)
         self.start.pack(side="left", padx=(0, 10))
-        label(self.custom, "até", 10, color="muted").pack(side="left", padx=(0, 4))
+        label(self.custom, t("common.until"), 11, color="muted", bg="bg").pack(side="left", padx=(0, 4))
         self.end = DateField(self.custom, width=10)
         self.end.pack(side="left")
         for f in (self.start, self.end):
-            f.bind("<<DateChanged>>", lambda e: self.reload())
-        self.custom_btn = Button(self.custom, "Aplicar", self.reload, "secondary", pad=(10, 4))
-        self.custom_btn.pack(side="left", padx=10)
+            f.bind("<<DateChanged>>", lambda e: self._reset())
+        Button(self.custom, t("common.apply"), self._reset, "secondary", pad=(10, 4)).pack(side="left", padx=10)
 
-        self.table_card = Card(self, 0, 0)
-        self.table_card.pack(fill="both", expand=True, padx=32)
-        columns = [
-            ("date", "Data", 100, "w", True),
-            ("description", "Descrição", 300, "w", True),
-            ("category", "Categoria", 160, "w", True),
-            ("account", "Conta", 140, "w", True),
-            ("amount", "Valor", 130, "e", True),
-        ]
-        self.table = SortableTree(self.table_card.body, columns, self._sorted, self.edit_selected, height=16)
-        self.table.pack(fill="both", expand=True)
-        self.table.mark_sort("date", True)
-        self.empty = EmptyState(self.table_card.body, "list", "Nenhuma movimentação encontrada",
-                                "Ajuste os filtros ou registre uma nova movimentação.",
-                                "Nova movimentação", self.app.new_transaction)
+        self.scroll = ScrollFrame(self, bg=c("bg"))
+        self.scroll.pack(fill="both", expand=True)
 
-        foot = tk.Frame(self, bg=c("bg"))
-        foot.pack(fill="x", padx=32, pady=12)
-        self.actions = tk.Frame(foot, bg=c("bg"))
-        self.actions.pack(side="right")
-        self.more = Button(foot, "Carregar mais", self.load_more, "secondary", pad=(12, 6))
-        self.summary = label(foot, "", 11, bg="bg", color="muted")
-        self.summary.pack(side="left")
-        Button(self.actions, "Excluir", self.delete_selected, "secondary", pad=(12, 6)).pack(side="right")
-        Button(self.actions, "Duplicar", self.duplicate_selected, "secondary", pad=(12, 6)).pack(side="right", padx=8)
-        Button(self.actions, "Editar", self.edit_selected, "secondary", pad=(12, 6)).pack(side="right")
-
-        self.table.tree.bind("<Delete>", lambda e: self.delete_selected())
-        self.table.tree.bind("<BackSpace>", lambda e: self.delete_selected())
-        self.menu = tk.Menu(self, tearoff=0)
-        self.menu.add_command(label="Editar", command=self.edit_selected)
-        self.menu.add_command(label="Duplicar", command=self.duplicate_selected)
-        self.menu.add_separator()
-        self.menu.add_command(label="Excluir", command=self.delete_selected)
-        for seq in ("<Button-2>", "<Button-3>", "<Control-Button-1>"):
-            self.table.tree.bind(seq, self._popup)
-
+    # ---------------------------------------------------------------- cabeçalho
     def header_actions(self, parent):
         return [
-            Button(parent, "Importar CSV", self.import_csv, "secondary", icon="upload"),
-            Button(parent, "Exportar CSV", self.export_csv, "secondary", icon="download"),
-            Button(parent, "Nova movimentação", self.app.new_transaction, "primary", icon="plus"),
+            Button(parent, t("common.import_csv"), self.import_csv, "secondary", icon="upload"),
+            Button(parent, t("common.export_csv"), self.export_csv, "secondary", icon="download"),
+            Button(parent, t("common.new_transaction"), self.app.new_transaction, "primary", icon="plus"),
         ]
 
-    # ---------------- filtros ----------------
     def focus_search(self):
-        self.search_entry.focus_set()
-        self.search_entry.select_range(0, "end")
+        self.search_field.focus()
 
+    # ---------------------------------------------------------------- filtros
     def _debounce(self):
         if self._search_job:
             self.after_cancel(self._search_job)
-        self._search_job = self.after(250, self.reload)
+        self._search_job = self.after(250, self._reset)
+
+    def _cancel_search(self, _e=None):
+        # a busca adiada não pode rodar depois que a página foi destruída
+        if self._search_job:
+            try:
+                self.after_cancel(self._search_job)
+            except tk.TclError:
+                pass
+            self._search_job = None
+
+    def _sort_changed(self):
+        self.sort = self.sort_select.get_id()
+        self._reset()
 
     def _period_changed(self):
         if self.period.get_id() == "custom":
-            self.custom.grid(row=1, column=0, columnspan=6, sticky="w", pady=(10, 0))
+            self.custom.pack(fill="x", pady=(0, 14), before=self.scroll)
         else:
-            self.custom.grid_forget()
-        self.reload()
+            self.custom.pack_forget()
+        self._reset()
 
     def clear_filters(self):
-        self.search.set("")
+        self.query.set("")
         self.period.set_id("month")
-        self.kind.set_id("all")
+        self.kind.set("all")
         self.category.current(0)
         self.account.current(0)
-        self.custom.grid_forget()
+        self.custom.pack_forget()
+        self._reset()
+
+    def _reset(self):
+        self._search_job = None
+        self.limit = config.PAGE_SIZE
+        self.reload()
+
+    def _load_more(self):
+        self.limit += config.PAGE_SIZE
         self.reload()
 
     def _range(self):
@@ -154,22 +171,20 @@ class TransactionsPage(Page):
 
     def _filters(self):
         start, end = self._range()
-        kind = self.kind.get_id()
+        kind = self.kind.get()
         return dict(
             start_date=start, end_date=end,
             kind=None if kind == "all" else kind,
-            category_id=self.category.get_id(), search=self.search.get(),
+            category_id=self.category.get_id(), search=self.query.get(),
             account_id=self.account.get_id(),
         )
 
-    # ---------------- dados ----------------
+    # ---------------------------------------------------------------- dados
     def refresh(self):
         super().refresh()
-        cat_items = [(-1, "Sem categoria")] + [
-            (r["id"], r["name"]) for r in categories.get_categories()]
-        self.category._empty = "Todas as categorias"
+        cat_items = [(-1, t("common.no_category"))] + [
+            (r["id"], category_label(r["name"])) for r in categories.get_categories()]
         self.category.set_items(cat_items)
-        self.account._empty = "Todas as contas"
         self.account.set_items([(r["id"], r["name"]) for r in accounts.list_accounts(include_archived=True)])
         self.reload()
 
@@ -180,112 +195,91 @@ class TransactionsPage(Page):
         except ValueError as exc:
             self.summary.configure(text=str(exc), fg=c("danger"))
             return
-        selected = self.table.selected()
-        self.rows = tx.list_transactions(order_by=self.sort_key, descending=self.descending,
+        order, descending = SORTS[self.sort]
+        self.rows = tx.list_transactions(order_by=order, descending=descending,
                                          limit=self.limit, offset=0, **filters)
         total = tx.summarize_transactions(**filters)
-        self.table.clear()
-        for r in self.rows:
-            income = r["kind"] == "income"
-            self.table.add(
-                r["id"],
-                (formatters.format_date(r["transaction_date"]), tx.describe(r),
-                 r["category_name"] or "Sem categoria", r["account_name"],
-                 ("+" if income else "-") + money(r["amount"])),
-                ("income" if income else "expense",))
-        if selected and self.table.tree.exists(selected):
-            self.table.tree.selection_set(selected)
-        self._filters_active = filters
-        shown = len(self.rows)
-        text = (f"{total['count']} movimentação(ões) · Receitas {money(total['income'])} · "
-                f"Despesas {money(total['expense'])} · Resultado {money(total['net'], signed=True)}")
+        self.publish([
+            kpi("trending-up", total["income"], t("common.income"), money_fmt()),
+            kpi("trending-down", total["expense"], t("common.expense"), money_fmt()),
+            kpi("wallet", total["net"], t("transactions.kpi_net"), money_fmt(signed=True)),
+        ])
+        self._render()
+        text = t("transactions.summary", count=total["count"], income=money(total["income"]),
+                 expense=money(total["expense"]), net=money(total["net"], signed=True))
         self.summary.configure(text=text, fg=c("muted"))
-        if shown < total["count"]:
-            self.more.configure()
+        if len(self.rows) < total["count"]:
             self.more.pack(side="right", padx=(0, 12))
         else:
             self.more.pack_forget()
+
+    def _render(self):
+        for w in self.scroll.inner.winfo_children():
+            w.destroy()
         if not self.rows:
-            self.empty.place(relx=0, rely=0, relwidth=1, relheight=1)
-            self.empty.lift()
-        else:
-            self.empty.place_forget()
-
-    def load_more(self):
-        self.limit += config.PAGE_SIZE
-        self.reload()
-
-    def _sorted(self, key, descending):
-        self.sort_key, self.descending = key, descending
-        self.limit = config.PAGE_SIZE
-        self.reload()
-
-    # ---------------- ações ----------------
-    def _popup(self, event):
-        row = self.table.tree.identify_row(event.y)
-        if row:
-            self.table.tree.selection_set(row)
-            self.menu.tk_popup(event.x_root, event.y_root)
-
-    def _selected_row(self):
-        sel = self.table.selected()
-        if not sel:
-            self.app.toast("Selecione uma movimentação na lista.", "info")
-            return None
-        return tx.get_transaction(int(sel))
-
-    def edit_selected(self):
-        row = self._selected_row()
-        if row:
-            self.app.edit_transaction(row)
-
-    def duplicate_selected(self):
-        row = self._selected_row()
-        if row:
-            data = tx.duplicate_transaction_defaults(row["id"])
-            self.app.new_transaction(defaults=data)
-
-    def delete_selected(self):
-        row = self._selected_row()
-        if not row:
+            EmptyState(self.scroll.inner, "list", t("common.no_transactions"), t("common.adjust_filters"),
+                       t("common.new_transaction"), self.app.new_transaction).pack(fill="both", expand=True)
             return
-        whole = False
-        if row["installment_group"]:
-            text = (f"“{row['description']}” é uma compra parcelada em "
-                    f"{row['installment_total']} vezes. Excluir somente esta parcela?")
-            if dialogs.confirm(self.app, "Excluir parcela", text, "Só esta parcela", False):
-                pass
-            elif dialogs.confirm(self.app, "Excluir compra parcelada",
-                                 "Excluir TODAS as parcelas desta compra?", "Excluir todas"):
-                whole = True
-            else:
-                return
-        elif not dialogs.confirm(
-                self.app, "Excluir movimentação",
-                f"Excluir “{row['description']}” de {money(row['amount'])}? "
-                "Você poderá desfazer logo em seguida."):
-            return
+        panel = Panel(self.scroll.inner, padx=8, pady=6, hover=False)
+        panel.pack(fill="x")
+        for i, r in enumerate(self.rows):
+            if i:
+                tk.Frame(panel.body, height=1, bg=mix(panel.fill, c("text"), 0.06)).pack(fill="x", padx=12)
+            self._row(panel.body, r, panel.fill)
 
-        def run():
-            deleted = tx.delete_transaction(row["id"], whole_group=whole)
-            self.app.after_change()
-            self.app.undoable("Movimentação excluída.", lambda: tx.restore_transactions(deleted))
-        self.guarded(run)
+    def _row(self, parent, r, fill):
+        income = r["kind"] == "income"
+        row = tk.Frame(parent, bg=fill)
+        row.pack(fill="x")
+        dot = tk.Canvas(row, width=10, height=10, bg=fill, highlightthickness=0)
+        tone = c("income" if income else "expense")
+        dot.create_oval(1, 1, 9, 9, fill=tone, outline=tone)
+        dot.pack(side="left", padx=(14, 12))
+        text = tk.Frame(row, bg=fill)
+        text.pack(side="left", fill="x", expand=True, pady=10)
+        label(text, clip(tx.describe(r), 48), 12, "semibold", bg=fill).pack(anchor="w")
+        category = category_label(r["category_name"]) if r["category_name"] else t("common.no_category")
+        label(text, clip(f"{formatters.format_date_short(r['transaction_date'])} · {category} · "
+                         f"{r['account_name']}", 70), 10, color="muted", bg=fill).pack(anchor="w")
+        label(row, ("+" if income else "−") + money(r["amount"]), 13, "semibold",
+              "income" if income else "text", bg=fill).pack(side="right", padx=(12, 0))
+        # duplo clique abre a edição; o botão ⋯ concentra as outras ações
+        self._bind_open(row, r)
+        more = CircleButton(row, "ellipsis", None, size=24, kind="plain", bg=fill, icon_size=13)
+        more.command = lambda r=r, m=more: popup_menu(m, self._menu(r))
+        more.pack(side="right", padx=(0, 14))
+
+    def _bind_open(self, widget, r):
+        if isinstance(widget, (CircleButton,)):
+            return
+        widget.bind("<Double-Button-1>", lambda e, r=r: self._open(r))
+        for child in widget.winfo_children():
+            self._bind_open(child, r)
+
+    # ---------------------------------------------------------------- ações
+    def _open(self, r):
+        self.app.edit_transaction(tx.get_transaction(r["id"]))
+
+    def _menu(self, r):
+        fresh = lambda: tx.get_transaction(r["id"])  # noqa: E731
+        return [(t("common.edit"), lambda: self.app.edit_transaction(fresh())),
+                (t("common.duplicate"), lambda: self.app.duplicate_transaction(fresh())),
+                None,
+                (t("common.delete"), lambda: self.app.delete_transaction(fresh()))]
 
     def export_csv(self):
         def run():
-            filters = self._filters()
-            rows = tx.list_transactions(order_by="date", descending=True, **filters)
+            rows = tx.list_transactions(order_by="date", descending=True, **self._filters())
             if not rows:
-                self.app.toast("Não há movimentações para exportar com esses filtros.")
+                self.app.toast(t("transactions.no_export"))
                 return
             path = filedialog.asksaveasfilename(
-                parent=self.app.root, title="Exportar movimentações", defaultextension=".csv",
+                parent=self.app.root, title=t("common.export_csv"), defaultextension=".csv",
                 initialfile=f"movimentacoes_{date.today().isoformat()}.csv",
                 filetypes=[("CSV", "*.csv")])
             if path:
                 n = importer.export_csv(path, rows)
-                self.app.toast(f"{n} movimentação(ões) exportada(s).", "success")
+                self.app.toast(t("transactions.exported", count=n), "success")
         self.guarded(run)
 
     def import_csv(self):
@@ -293,9 +287,9 @@ class TransactionsPage(Page):
         result = dlg.wait()
         if result:
             self.app.after_change()
-            text = f"{result['imported']} importada(s)"
+            text = t("toast.imported", count=result["imported"])
             if result["skipped"]:
-                text += f", {result['skipped']} ignorada(s) por já existirem"
+                text += " " + t("toast.import_skipped", count=result["skipped"])
             if result["fallback_categories"]:
-                text += f". {result['fallback_categories']} sem categoria conhecida foram para “Outras”"
-            self.app.toast(text + ".", "success")
+                text += " " + t("toast.import_fallback", count=result["fallback_categories"])
+            self.app.toast(text, "success")

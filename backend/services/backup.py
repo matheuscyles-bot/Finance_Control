@@ -3,7 +3,6 @@
 from datetime import datetime
 
 import database
-from database import DatabaseError
 
 
 def auto_backup_if_needed():

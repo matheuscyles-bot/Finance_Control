@@ -22,3 +22,13 @@ data/
 credentials/
 secrets/
 .DS_Store
+node_modules/
+.venv/
+venv/
+.next/
+*.zip
+# Arquivos de desenvolvimento (não publicados)
+CLAUDE.md
+.claudeignore
+.claude/
+.vscode/

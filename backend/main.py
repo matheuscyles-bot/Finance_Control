@@ -7,11 +7,12 @@ from logging.handlers import RotatingFileHandler
 from tkinter import messagebox
 
 from backend import config
+from backend.utils import i18n
 import database
 
 
 # setup_logging: configura o registro de eventos (logs) do app.
-# Grava em data/logs/app.log, com rotação: quando o arquivo passa de 500 KB,
+# Grava em <pasta de dados>/logs/app.log, com rotação: quando o arquivo passa de 500 KB,
 # ele é arquivado e são mantidos só 2 backups, para não crescer sem limite.
 # Se não conseguir criar a pasta ou o arquivo, cai para um log simples (só avisos).
 def setup_logging():
@@ -42,7 +43,7 @@ def adopt_legacy_db():
         return False
     import sqlite3
     database.DATA_DIR.mkdir(parents=True, exist_ok=True)
-    source = sqlite3.connect(f"file:{legacy}?mode=ro", uri=True)
+    source = sqlite3.connect(legacy.resolve().as_uri() + "?mode=ro", uri=True)
     try:
         target = sqlite3.connect(database.DB_PATH)
         try:
@@ -68,6 +69,10 @@ def main():
             logging.getLogger("finance_control").info("Banco anterior copiado para a pasta do usuário")
     except Exception as exc:
         logging.getLogger("finance_control").warning("Não foi possível copiar o banco anterior: %s", type(exc).__name__)
+    try:
+        i18n.configure(database.DATA_DIR, database.BASE_DIR)
+    except i18n.LocaleConfigError:
+        pass
     try:
         database.init_db()
     except Exception as exc:

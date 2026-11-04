@@ -1,17 +1,64 @@
-"""Componentes visuais reutilizáveis (apenas biblioteca padrão)."""
+"""Componentes visuais reutilizáveis: botões em pílula, cards de vidro, ícones
+(fonte Lucide), segmented control, campos, tabela, estados vazios e avisos."""
 from PIL import Image, ImageDraw, ImageTk
 import calendar
 import tkinter as tk
+import tkinter.font as tkfont
 from datetime import date
 from tkinter import ttk
 
-from frontend import theme
-from frontend.theme import c, font
+from frontend import motion
+from frontend.draw import round_rect
+from frontend.theme import c, font, has_icons, icon, icon_font, mix
 from backend.utils import formatters
+from backend.utils.i18n import t
 
 
 # ----------------------------------------------------------------------
-# Ícones desenhados em canvas (não dependem de fontes nem de imagens)
+# Utilidades
+# ----------------------------------------------------------------------
+
+_FONTS = {}
+
+
+def _font_obj(spec):
+    # a chave inclui a janela Tk atual: fontes de uma janela destruída não servem
+    key = (spec, id(tk._default_root))
+    obj = _FONTS.get(key)
+    if obj is None:
+        if len(_FONTS) > 200:
+            _FONTS.clear()
+        obj = _FONTS[key] = tkfont.Font(font=spec)
+    return obj
+
+
+def measure(spec, text):
+    """Largura do texto em pixels com a fonte ``spec``."""
+    return _font_obj(spec).measure(text)
+
+
+def linespace(spec):
+    return _font_obj(spec).metrics("linespace")
+
+
+def bg_of(widget, fallback="bg"):
+    try:
+        return widget.cget("bg")
+    except tk.TclError:
+        return c(fallback)
+
+
+def pointer_inside(widget):
+    try:
+        x, y = widget.winfo_pointerxy()
+        rx, ry = widget.winfo_rootx(), widget.winfo_rooty()
+        return rx <= x < rx + widget.winfo_width() and ry <= y < ry + widget.winfo_height()
+    except tk.TclError:
+        return False
+
+
+# ----------------------------------------------------------------------
+# Ícones: fonte Lucide quando disponível; desenho simples como reserva
 # ----------------------------------------------------------------------
 
 def draw_icon(canvas, name, color, s=20):
@@ -42,37 +89,23 @@ def draw_icon(canvas, name, color, s=20):
         canvas.create_arc(3 * k, 3 * k, 17 * k, 17 * k, start=30, extent=240,
                           style="arc", outline=color, width=w)
         canvas.create_polygon(14 * k, 1 * k, 19 * k, 6 * k, 12 * k, 7 * k, fill=color, outline=color)
-    elif name == "gear":
-        o(6 * k, 6 * k, 14 * k, 14 * k, outline=color, width=w)
-        for dx, dy in ((10, 1), (10, 19), (1, 10), (19, 10)):
-            d(10 * k, 10 * k, dx * k, dy * k, fill=color, width=w)
-        o(7.5 * k, 7.5 * k, 12.5 * k, 12.5 * k, fill=c("sidebar"), outline=color, width=w)
-    elif name == "plus":
+    elif name in ("plus",):
         d(10 * k, 4 * k, 10 * k, 16 * k, fill=color, width=w + 1, capstyle="round")
         d(4 * k, 10 * k, 16 * k, 10 * k, fill=color, width=w + 1, capstyle="round")
-    elif name == "transfer":
-        d(3 * k, 7 * k, 17 * k, 7 * k, fill=color, width=w)
-        d(13 * k, 3 * k, 17 * k, 7 * k, 13 * k, 11 * k, fill=color, width=w)
-        d(17 * k, 14 * k, 3 * k, 14 * k, fill=color, width=w)
-        d(7 * k, 10 * k, 3 * k, 14 * k, 7 * k, 18 * k, fill=color, width=w)
     elif name == "search":
         o(3 * k, 3 * k, 13 * k, 13 * k, outline=color, width=w)
         d(12 * k, 12 * k, 17 * k, 17 * k, fill=color, width=w + 1, capstyle="round")
-    elif name == "download":
-        d(10 * k, 3 * k, 10 * k, 13 * k, fill=color, width=w)
-        d(5 * k, 9 * k, 10 * k, 14 * k, 15 * k, 9 * k, fill=color, width=w)
-        d(3 * k, 17 * k, 17 * k, 17 * k, fill=color, width=w)
-    elif name == "upload":
-        d(10 * k, 14 * k, 10 * k, 4 * k, fill=color, width=w)
-        d(5 * k, 8 * k, 10 * k, 3 * k, 15 * k, 8 * k, fill=color, width=w)
-        d(3 * k, 17 * k, 17 * k, 17 * k, fill=color, width=w)
-    elif name == "moon":
-        canvas.create_arc(3 * k, 3 * k, 17 * k, 17 * k, start=60, extent=240,
-                          style="arc", outline=color, width=w)
-    elif name == "sun":
-        o(6 * k, 6 * k, 14 * k, 14 * k, outline=color, width=w)
     else:
         o(4 * k, 4 * k, 16 * k, 16 * k, outline=color, width=w)
+
+
+def put_icon(canvas, x, y, name, color, size=18, tags=()):
+    """Desenha o ícone centrado em (x, y) dentro de um canvas existente."""
+    glyph = icon(name)
+    if has_icons() and glyph:
+        return canvas.create_text(x, y, text=glyph, font=icon_font(size), fill=color, tags=tags)
+    r = size * 0.32
+    return canvas.create_oval(x - r, y - r, x + r, y + r, outline=color, width=2, tags=tags)
 
 
 class Icon(tk.Canvas):
@@ -85,67 +118,104 @@ class Icon(tk.Canvas):
     def set_color(self, color, bg):
         self.configure(bg=bg)
         self.delete("all")
-        draw_icon(self, self.name, color, self.size)
+        if has_icons() and icon(self.name):
+            self.create_text(self.size / 2, self.size / 2, text=icon(self.name),
+                             font=icon_font(max(int(self.size * 0.82), 8)), fill=color)
+        else:
+            draw_icon(self, self.name, color, self.size)
 
 
 # ----------------------------------------------------------------------
 # Botões
 # ----------------------------------------------------------------------
 
-class Button(tk.Frame):
-    """Botão plano (tk.Button ignora cores no macOS, por isso é desenhado)."""
+class Button(tk.Canvas):
+    """Botão em pílula (cantos totalmente arredondados), com ícone opcional.
+    É desenhado em canvas porque tk.Button ignora cores no macOS."""
 
     KINDS = {
         "primary": ("primary", "primary_hover", "primary_text", None),
         "danger": ("danger", "danger_hover", "primary_text", None),
-        "secondary": ("surface", "surface_alt", "text", "border"),
-        "ghost": ("bg", "surface_alt", "muted", None),
+        "secondary": ("surface_alt", "surface_hi", "text", "border"),
+        "ghost": (None, "surface_alt", "muted", None),
     }
 
     def __init__(self, parent, text, command=None, kind="secondary", icon=None,
-                 pad=(14, 8), parent_bg=None):
+                 pad=(16, 9), parent_bg=None, size=11):
         bg_key, hover_key, fg_key, border = self.KINDS[kind]
-        self._bg, self._hover = c(bg_key), c(hover_key)
-        fg = self._fg = c(fg_key)
-        super().__init__(parent, bg=self._bg, cursor="hand2",
-                         highlightthickness=1 if border else 0,
-                         highlightbackground=c(border) if border else self._bg,
-                         highlightcolor=c(border) if border else self._bg)
+        self._parent_bg = parent_bg or bg_of(parent)
+        self._bg = c(bg_key) if bg_key else self._parent_bg
+        self._hover = c(hover_key)
+        self._border = c(border) if border else None
+        self._fg = c(fg_key)
+        self.kind = kind
+        super().__init__(parent, bg=self._parent_bg, highlightthickness=0, bd=0,
+                         cursor="hand2", takefocus=1)
         self.command = command
         self.enabled = True
-        self._parts = []
-        inner = tk.Frame(self, bg=self._bg)
-        inner.pack(padx=pad[0], pady=pad[1])
-        if icon:
-            ic = Icon(inner, icon, fg, self._bg, 16)
-            ic.pack(side="left", padx=(0, 6))
-            self._parts.append(ic)
-        self.label = tk.Label(inner, text=text, bg=self._bg, fg=fg,
-                              font=font(11, "bold" if kind in ("primary", "danger") else "normal"))
-        self.label.pack(side="left")
-        self._inner = inner
-        self._parts += [inner, self.label]
-        for w in [self] + self._parts:
-            w.bind("<Enter>", self._enter)
-            w.bind("<Leave>", self._leave)
-            w.bind("<Button-1>", self._click)
-        self.configure(takefocus=1)
+        self._focused = False
+        self._hot = 0.0
+        self._pad = pad
+        self._text = text or ""
+        self._icon = icon
+        self._font = font(size, "semibold")
+        self._ifont = icon_font(size + 4)
+        self._fade = motion.Channel()
+        self._layout()
+        self.bind("<Configure>", lambda e: self._draw())
+        self.bind("<Enter>", self._enter)
+        self.bind("<Leave>", self._leave)
+        self.bind("<Button-1>", self._click)
         self.bind("<Return>", self._click)
         self.bind("<space>", self._click)
+        self.bind("<FocusIn>", lambda e: self._set_focus(True))
+        self.bind("<FocusOut>", lambda e: self._set_focus(False))
 
-    def _paint(self, color):
-        self.configure(bg=color)
-        for w in self._parts:
-            w.configure(bg=color)
-            if isinstance(w, Icon):
-                w.configure(bg=color)
+    def _layout(self):
+        tw = measure(self._font, self._text) if self._text else 0
+        glyph = icon(self._icon) if self._icon and has_icons() else ""
+        iw = measure(self._ifont, glyph) if glyph else 0
+        gap = 7 if (iw and tw) else 0
+        self._metrics = (glyph, iw, gap, tw)
+        height = linespace(self._font) + 2 * self._pad[1]
+        width = self._pad[0] * 2 + iw + gap + tw
+        if not tw:  # só ícone: botão redondo
+            width = height
+        self.configure(width=width, height=height)
+
+    def _draw(self):
+        self.delete("all")
+        w, h = self.winfo_width(), self.winfo_height()
+        if w < 4 or h < 4:
+            w, h = int(self["width"]), int(self["height"])
+        fill = mix(self._bg, self._hover, self._hot) if self.enabled else self._bg
+        outline = c("primary") if self._focused else (self._border or fill)
+        round_rect(self, 1, 1, w - 1, h - 1, (h - 2) / 2, fill, outline, 1.5 if self._focused else 1)
+        fg = self._fg if self.enabled else c("faint")
+        glyph, iw, gap, tw = self._metrics
+        x = (w - (iw + gap + tw)) / 2
+        if glyph:
+            self.create_text(x + iw / 2, h / 2, text=glyph, font=self._ifont, fill=fg)
+        x += iw + gap
+        if tw:
+            self.create_text(x, h / 2, text=self._text, font=self._font, fill=fg, anchor="w")
+
+    def _animate(self, target):
+        def step(value):
+            self._hot = value
+            self._draw()
+        self._fade.run(self, self._hot, target, 0.16, "power2.out", step)
 
     def _enter(self, _e):
         if self.enabled:
-            self._paint(self._hover)
+            self._animate(1.0)
 
     def _leave(self, _e):
-        self._paint(self._bg)
+        self._animate(0.0)
+
+    def _set_focus(self, on):
+        self._focused = on
+        self._draw()
 
     def _click(self, _e=None):
         if self.enabled and self.command:
@@ -155,91 +225,109 @@ class Button(tk.Frame):
     def set_enabled(self, enabled):
         self.enabled = enabled
         self.configure(cursor="hand2" if enabled else "arrow")
-        self.label.configure(fg=self._fg if enabled else c("muted"))
+        self._draw()
 
     def set_text(self, text):
-        self.label.configure(text=text)
+        self._text = text or ""
+        self._layout()
+        self._draw()
 
-_RR_CACHE = {}
 
 _RR_CACHE = {}  # "gaveta" de imagens já prontas (cache)
 
+
 def rounded_image(w, h, radius, fill, outline, bg, master, S=4):
-    # w, h    = largura e altura do retângulo em pixels
-    # radius  = quão redondo é o canto
-    # fill    = cor de dentro; outline = cor da borda (ou None)
-    # bg      = cor do fundo por trás (a do pai), para os cantos ficarem certos
-    # S       = fator de ampliação (desenha 4x maior para suavizar)
-
-    # monta uma "chave" que identifica esta imagem exata
+    """Retângulo arredondado suavizado como imagem (fundo ``bg`` nos cantos)."""
     key = (id(master.tk), w, h, radius, fill, outline, bg)
-
-    # se já criei uma imagem igual antes, devolve a guardada (evita refazer)
     if key in _RR_CACHE:
         return _RR_CACHE[key]
-
-    # cria uma imagem em branco 4x maior que o tamanho pedido, pintada com a cor de fundo
     img = Image.new("RGBA", (w * S, h * S), bg)
-
-    # cria o "lápis" para desenhar em cima dessa imagem
-    draw = ImageDraw.Draw(img)
-
-    # desenha o retângulo arredondado (tudo multiplicado por S por causa da ampliação)
-    draw.rounded_rectangle(
-        (0, 0, w * S - 1, h * S - 1),      # canto superior esquerdo até inferior direito
-        radius=radius * S,                  # raio do canto, também ampliado
-        fill=fill,                          # cor do preenchimento
-        outline=outline,                    # cor da borda
-        width=S if outline else 0)          # espessura da borda (0 se não tiver borda)
-
-    # reduz a imagem ao tamanho real; LANCZOS é o filtro que suaviza as bordas
-    # (é aqui que o serrilhado some)
+    ImageDraw.Draw(img).rounded_rectangle(
+        (0, 0, w * S - 1, h * S - 1), radius=radius * S, fill=fill,
+        outline=outline, width=S if outline else 0)
     img = img.resize((w, h), Image.LANCZOS)
-
-    # converte para um formato que o Tkinter consegue mostrar
     photo = ImageTk.PhotoImage(img, master=master)
-
-    # guarda na gaveta (também impede o Python de descartar a imagem)
     _RR_CACHE[key] = photo
-
-    # devolve a imagem pronta
     return photo
 
-class Card(tk.Canvas):
-    """Card com cantos arredondados. O conteúdo vai em `.body`."""
-    RADIUS = 14
 
-    def __init__(self, parent, padx=18, pady=16, **kw):
-        try:
-            parent_bg = parent.cget("bg")
-        except tk.TclError:
-            parent_bg = c("bg")
-        super().__init__(parent, bg=parent_bg, highlightthickness=0, bd=0, **kw)
+# ----------------------------------------------------------------------
+# Card de vidro
+# ----------------------------------------------------------------------
+
+class Card(tk.Canvas):
+    """Card de vidro: cantos bem arredondados, borda clara fina, sem sombra.
+    O conteúdo vai em ``.body``. Com ``hover=True`` o card sobe levemente e a
+    borda ganha brilho com o mouse por cima."""
+
+    RADIUS = 24
+    LIFT = 3
+
+    def __init__(self, parent, padx=22, pady=20, fill=None, hover=False, radius=None,
+                 border=None, **kw):
+        self._parent_bg = bg_of(parent)
+        super().__init__(parent, bg=self._parent_bg, highlightthickness=0, bd=0, **kw)
+        self.fill = fill or c("surface")
+        self._border = border or (mix(self.fill, c("text"), 0.08) if fill else c("border"))
+        self._radius = radius or self.RADIUS
         self._padx, self._pady = padx, pady
-        self.body = tk.Frame(self, bg=c("surface"))
-        self._win = self.create_window(padx, pady, window=self.body, anchor="nw")
-        self.bind("<Configure>", self._redraw)
+        self._space = self.LIFT if hover else 0
+        self._lift = 0.0
+        self._size = (0, 0)
+        self.body = tk.Frame(self, bg=self.fill)
+        self._win = self.create_window(padx, pady + self._space, window=self.body, anchor="nw")
+        self.bind("<Configure>", self._on_configure)
         self.body.bind("<Configure>", self._fit)
+        self._watch = None
+        if hover:
+            self._chan = motion.Channel()
+            for w in (self, self.body):
+                w.bind("<Enter>", self._enter, add="+")
 
     def _fit(self, _e=None):
         self.configure(width=self.body.winfo_reqwidth() + 2 * self._padx,
-                       height=self.body.winfo_reqheight() + 2 * self._pady)
+                       height=self.body.winfo_reqheight() + 2 * self._pady + self._space)
 
-    def _redraw(self, e):
-        self.itemconfigure(self._win, width=max(e.width - 2 * self._padx, 1))
+    def _on_configure(self, e):
+        self._size = (e.width, e.height)
+        # o conteúdo ocupa todo o card (não só a altura pedida)
+        self.itemconfigure(self._win, width=max(e.width - 2 * self._padx, 1),
+                           height=max(e.height - 2 * self._pady - self._space, 1))
+        self._draw()
+
+    def _draw(self):
+        w, h = self._size
+        if w < 4 or h < 4:
+            return
+        off = self._space * (1 - self._lift)
         self.delete("bg")
-        r = self.RADIUS
-        x1, y1, x2, y2 = 1, 1, e.width - 2, e.height - 2
-        pts = [x1+r, y1, x2-r, y1, x2, y1, x2, y1+r, x2, y2-r, x2, y2,
-               x2-r, y2, x1+r, y2, x1, y2, x1, y2-r, x1, y1+r, x1, y1]
-        self.create_polygon(pts, smooth=True, fill=c("surface"),
-                            outline=c("border"), width=1, tags="bg")
+        border = mix(self._border, c("border_hi"), self._lift)
+        round_rect(self, 1, 1 + off, w - 1, h - 1 - self._space + off, self._radius,
+                   self.fill, border, 1, tags="bg")
         self.tag_lower("bg")
+        self.coords(self._win, self._padx, self._pady + off)
+
+    def _set_lift(self, value):
+        self._lift = value
+        self._draw()
+
+    def _enter(self, _e=None):
+        if self._watch is None:
+            self._chan.run(self, self._lift, 1.0, 0.2, "power2.out", self._set_lift)
+            self._watch = self.after(120, self._poll)
+
+    def _poll(self):
+        self._watch = None
+        if pointer_inside(self):
+            self._watch = self.after(120, self._poll)
+        else:
+            self._chan.run(self, self._lift, 0.0, 0.25, "power2.out", self._set_lift)
 
 
 def label(parent, text="", size=11, weight="normal", color="text", bg="surface", **kw):
-    return tk.Label(parent, text=text, bg=c(bg), fg=c(color), font=font(size, weight),
-                    anchor=kw.pop("anchor", "w"), **kw)
+    return tk.Label(parent, text=text, bg=c(bg) if not bg.startswith("#") else bg,
+                    fg=c(color) if not color.startswith("#") else color,
+                    font=font(size, weight), anchor=kw.pop("anchor", "w"), **kw)
 
 
 def separator(parent, bg="border"):
@@ -247,16 +335,14 @@ def separator(parent, bg="border"):
 
 
 class ScrollFrame(tk.Frame):
-    """Área rolável vertical; o conteúdo acompanha a largura da janela."""
+    """Área rolável vertical, sem barra visível (use a roda do mouse ou o
+    trackpad); o conteúdo acompanha a largura da janela."""
 
     def __init__(self, parent, bg=None):
         bg = bg or c("bg")
         super().__init__(parent, bg=bg)
         self.canvas = tk.Canvas(self, bg=bg, highlightthickness=0, bd=0)
-        self.bar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.canvas.configure(yscrollcommand=self.bar.set)
         self.canvas.pack(side="left", fill="both", expand=True)
-        self.bar.pack(side="right", fill="y")
         self.inner = tk.Frame(self.canvas, bg=bg)
         self._win = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
         self.inner.bind("<Configure>", self._on_inner)
@@ -267,18 +353,9 @@ class ScrollFrame(tk.Frame):
 
     def _on_inner(self, _e):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        self._toggle_bar()
 
     def _on_canvas(self, e):
         self.canvas.itemconfigure(self._win, width=e.width)
-        self._toggle_bar()
-
-    def _toggle_bar(self):
-        need = self.inner.winfo_reqheight() > self.canvas.winfo_height()
-        if need and not self.bar.winfo_ismapped():
-            self.bar.pack(side="right", fill="y")
-        elif not need and self.bar.winfo_ismapped():
-            self.bar.pack_forget()
 
     def _bind_wheel(self, on):
         top = self.winfo_toplevel()
@@ -291,8 +368,8 @@ class ScrollFrame(tk.Frame):
                 top.unbind_all(seq)
 
     def _wheel(self, e):
-        if not self.bar.winfo_ismapped():
-            return
+        if self.inner.winfo_reqheight() <= self.canvas.winfo_height():
+            return  # conteúdo cabe na tela: nada para rolar
         if e.num == 4:
             step = -2
         elif e.num == 5:
@@ -315,12 +392,6 @@ def combo(parent, values, variable=None, width=22):
     cb = ttk.Combobox(parent, values=values, textvariable=variable,
                       state="readonly", width=width, font=font(11))
     return cb
-
-
-_MONTHS = (
-    "jan", "fev", "mar", "abr", "mai", "jun",
-    "jul", "ago", "set", "out", "nov", "dez",
-)
 
 
 def _wheel_date(current, component, step, preferred_day):
@@ -360,25 +431,27 @@ class WheelDatePopup(tk.Toplevel):
         self.body = tk.Frame(self, bg=c("surface"), padx=18, pady=16)
         self.body.pack(padx=1, pady=1)
 
-        tk.Label(self.body, text="Escolha a data", bg=c("surface"),
+        tk.Label(self.body, text=t("calendar.choose_date"), bg=c("surface"),
                  fg=c("text"), font=font(13, "bold")).pack(anchor="w")
         tk.Label(
-            self.body, text="Role a roda do mouse sobre dia, mês ou ano",
-            bg=c("surface"), fg=c("muted"), font=font(9)
+            self.body, text=t("calendar.wheel_hint"),
+            bg=c("surface"), fg=c("muted"), font=font(10)
         ).pack(anchor="w", pady=(3, 12))
 
         wheels = tk.Frame(self.body, bg=c("surface"))
         wheels.pack(fill="x")
         self.values = {}
         for component, title, width in (
-            ("day", "DIA", 5), ("month", "MÊS", 7), ("year", "ANO", 7)
+            ("day", t("calendar.day"), 5),
+            ("month", t("calendar.month"), 7),
+            ("year", t("calendar.year"), 7),
         ):
             column = tk.Frame(wheels, bg=c("surface"), padx=5)
             column.pack(side="left", expand=True, fill="x")
             tk.Label(column, text=title, bg=c("surface"), fg=c("muted"),
-                     font=font(8, "bold")).pack(pady=(0, 5))
+                     font=font(10, "bold")).pack(pady=(0, 5))
             previous = tk.Label(column, width=width, bg=c("surface"),
-                                fg=c("muted"), font=font(10), pady=4)
+                                fg=c("muted"), font=font(11), pady=4)
             previous.pack()
             selected = tk.Label(
                 column, width=width, bg=c("primary_soft"), fg=c("primary"),
@@ -387,7 +460,7 @@ class WheelDatePopup(tk.Toplevel):
             )
             selected.pack()
             following = tk.Label(column, width=width, bg=c("surface"),
-                                 fg=c("muted"), font=font(10), pady=4)
+                                 fg=c("muted"), font=font(11), pady=4)
             following.pack()
             self.values[component] = (previous, selected, following)
             for widget in (column, previous, selected, following):
@@ -410,8 +483,8 @@ class WheelDatePopup(tk.Toplevel):
 
         footer = tk.Frame(self.body, bg=c("surface"))
         footer.pack(fill="x", pady=(14, 0))
-        Button(footer, "Cancelar", self.close, "secondary", pad=(12, 6)).pack(side="right")
-        Button(footer, "Usar data", self._confirm, "primary", pad=(12, 6)).pack(
+        Button(footer, t("common.cancel"), self.close, "secondary", pad=(12, 6)).pack(side="right")
+        Button(footer, t("common.use_date"), self._confirm, "primary", pad=(12, 6)).pack(
             side="right", padx=(0, 8)
         )
 
@@ -465,7 +538,7 @@ class WheelDatePopup(tk.Toplevel):
 
     def _render(self):
         day_text = lambda value: f"{value:02d}"
-        month_text = lambda value: _MONTHS[value - 1]
+        month_text = lambda value: t(f"format.months_abbr.{value}")
         formatters_for = {
             "day": day_text, "month": month_text, "year": str,
         }
@@ -522,8 +595,8 @@ class DateField(tk.Frame):
         self._clear_label = None
         if optional:
             self._clear_label = tk.Label(
-                self, text="Limpar", bg=bg or c("surface"), fg=c("muted"),
-                font=font(9), cursor="hand2", padx=5
+                self, text=t("calendar.clear"), bg=bg or c("surface"), fg=c("muted"),
+                font=font(10), cursor="hand2", padx=5
             )
             self._clear_label.pack(side="left")
             self._clear_label.bind("<Button-1>", lambda _event: self.clear())
@@ -541,12 +614,13 @@ class DateField(tk.Frame):
 
     def _render(self):
         self._date_label.configure(
-            text=self._selected.strftime("%d/%m/%Y") if self._selected else "Selecionar data",
+            text=formatters.format_date(self._selected.isoformat())
+            if self._selected else t("common.select_date"),
             fg=c("text") if self._selected else c("muted")
         )
 
     def get(self):
-        return self._selected.strftime("%d/%m/%Y") if self._selected else ""
+        return formatters.format_date(self._selected.isoformat()) if self._selected else ""
 
     def set_iso(self, iso):
         self._selected = date.fromisoformat(formatters.parse_date(iso))
@@ -554,14 +628,14 @@ class DateField(tk.Frame):
 
     def clear(self):
         if not self._optional:
-            raise ValueError("Este campo de data não pode ficar vazio.")
+            raise ValueError(t("validation.date_required"))
         self._selected = None
         self._render()
         self.event_generate("<<DateChanged>>")
 
     def get_iso(self):
         if self._selected is None:
-            raise ValueError("Escolha uma data.")
+            raise ValueError(t("calendar.choose_date"))
         return formatters.parse_date(self.get())
 
 
@@ -570,8 +644,9 @@ class DateField(tk.Frame):
 # ----------------------------------------------------------------------
 
 class SortableTree(tk.Frame):
-    """Tabela com cabeçalhos clicáveis (ordenação feita no banco) e
-    barra de rolagem. columns: [(id, título, largura, anchor, ordenável)]."""
+    """Tabela com cabeçalhos clicáveis (ordenação feita no banco), sem barra
+    de rolagem visível (use a roda do mouse ou o trackpad).
+    columns: [(id, título, largura, anchor, ordenável)]."""
 
     def __init__(self, parent, columns, on_sort=None, on_open=None, height=14):
         super().__init__(parent, bg=c("surface"))
@@ -581,10 +656,7 @@ class SortableTree(tk.Frame):
         ids = [col[0] for col in columns]
         self.tree = ttk.Treeview(self, columns=ids, show="headings",
                                  selectmode="browse", height=height)
-        self.bar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscrollcommand=self.bar.set)
         self.tree.grid(row=0, column=0, sticky="nsew")
-        self.bar.grid(row=0, column=1, sticky="ns")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         for cid, title, width, anchor, sortable in columns:
@@ -628,51 +700,76 @@ class SortableTree(tk.Frame):
 # ----------------------------------------------------------------------
 
 class EmptyState(tk.Frame):
-    def __init__(self, parent, icon, title, text, action_text=None, action=None):
-        super().__init__(parent, bg=c("surface"))
-        box = tk.Frame(self, bg=c("surface"))
-        box.place(relx=0.5, rely=0.45, anchor="center")
-        Icon(box, icon, c("muted"), c("surface"), 36).pack()
-        label(box, title, 14, "bold", anchor="center").pack(pady=(10, 2))
-        tk.Label(box, text=text, bg=c("surface"), fg=c("muted"), font=font(11),
-                 justify="center", wraplength=360).pack()
+    def __init__(self, parent, icon_name, title, text, action_text=None, action=None, bg=None):
+        bg = bg or bg_of(parent, "surface")
+        super().__init__(parent, bg=bg, height=280)
+        box = tk.Frame(self, bg=bg)
+        box.place(relx=0.5, rely=0.48, anchor="center")
+        ring = tk.Canvas(box, width=68, height=68, bg=bg, highlightthickness=0, bd=0)
+        ring.create_oval(2, 2, 66, 66, fill=c("surface_alt"), outline=c("border"))
+        put_icon(ring, 34, 34, icon_name, c("accent_text"), 24)
+        ring.pack()
+        tk.Label(box, text=title, bg=bg, fg=c("text"), font=font(15, "semibold")).pack(pady=(16, 4))
+        tk.Label(box, text=text, bg=bg, fg=c("muted"), font=font(11),
+                 justify="center", wraplength=380).pack()
         if action_text:
-            Button(box, action_text, action, "primary", icon="plus").pack(pady=(14, 0))
+            Button(box, action_text, action, "primary", icon="plus").pack(pady=(18, 0))
 
 
 class Toasts:
-    """Mensagens rápidas no canto inferior; podem ter ação (Desfazer)."""
+    """Mensagens rápidas em pílula no rodapé; podem ter ação (Desfazer)."""
+
+    ICONS = {"success": ("circle-check", "primary"), "error": ("circle-alert", "danger"),
+             "info": ("info", "blue")}
 
     def __init__(self, root):
         self.root = root
         self.current = None
+        self._after = None
 
     def show(self, text, kind="info", action_text=None, action=None, ms=5000):
         self.dismiss()
-        bg = c("expense_soft") if kind == "error" else c("toast")
-        fg = c("expense") if kind == "error" else c("toast_text")
-        frame = tk.Frame(self.root, bg=bg)
-        tk.Label(frame, text=text, bg=bg, fg=fg, font=font(11), padx=16, pady=10,
-                 wraplength=480, justify="left").pack(side="left")
+        root = self.root
+        fill, fg = c("toast"), c("toast_text")
+        glyph, accent = self.ICONS.get(kind, self.ICONS["info"])
+        body_font, bold = font(11, "medium"), font(11, "bold")
+        wrap = 520
+        text_w = min(measure(body_font, text), wrap)
+        rows = max(1, -(-measure(body_font, text) // wrap))
+        line_h = linespace(body_font)
+        action_w = measure(bold, action_text) + 28 if action_text else 0
+        w = 18 + 26 + text_w + action_w + 22
+        h = max(46, rows * line_h + 24)
+        canvas = tk.Canvas(root, width=w, height=h, highlightthickness=0, bd=0, bg=c("bg"))
+        x_root = root.winfo_rootx() + root.winfo_width() // 2
+        y_root = root.winfo_rooty() + root.winfo_height() - 30 - h // 2
+        under = root.winfo_containing(x_root - w // 2 + 4, y_root - h // 2 + 4)
+        canvas.configure(bg=bg_of(under) if under is not None else c("bg"))
+        round_rect(canvas, 1, 1, w - 1, h - 1, min(h / 2, 23), fill, mix(fill, c("text"), 0.1))
+        put_icon(canvas, 18 + 10, h / 2, glyph, c(accent), 16)
+        canvas.create_text(18 + 26, h / 2, text=text, font=body_font, fill=fg, anchor="w", width=wrap)
         if action_text:
-            btn = tk.Label(frame, text=action_text, bg=bg, fg=fg,
-                           font=font(11, "bold"), cursor="hand2", padx=14, pady=10)
-            btn.pack(side="left")
+            ax = 18 + 26 + text_w + 18
+            canvas.create_text(ax, h / 2, text=action_text, font=bold, fill=c("primary"),
+                               anchor="w", tags="action")
 
             def run(_e=None):
                 self.dismiss()
                 action()
-            btn.bind("<Button-1>", run)
-        frame.place(relx=0.5, rely=1.0, anchor="s", y=-24)
-        frame.lift()
-        self.current = frame
-        self._after = self.root.after(ms if kind != "error" else max(ms, 8000), self.dismiss)
+            canvas.tag_bind("action", "<Button-1>", run)
+            canvas.tag_bind("action", "<Enter>", lambda e: canvas.configure(cursor="hand2"))
+            canvas.tag_bind("action", "<Leave>", lambda e: canvas.configure(cursor=""))
+        canvas.place(relx=0.5, rely=1.0, anchor="s", y=-12)
+        tk.Misc.lift(canvas)  # Canvas.lift move itens; aqui queremos o widget
+        self.current = canvas
+        motion.tween(canvas, 18, 0, 0.32, "power3.out",
+                     lambda v: canvas.place_configure(y=-24 + v) if canvas.winfo_exists() else None)
+        self._after = root.after(ms if kind != "error" else max(ms, 8000), self.dismiss)
 
     def dismiss(self):
-        after = getattr(self, "_after", None)
-        if after:
+        if self._after:
             try:
-                self.root.after_cancel(after)
+                self.root.after_cancel(self._after)
             except tk.TclError:
                 pass
             self._after = None
@@ -684,29 +781,80 @@ class Toasts:
             self.current = None
 
 
-class Segmented(tk.Frame):
-    """Seletor de opções lado a lado (ex.: Despesa | Receita)."""
+class Segmented(tk.Canvas):
+    """Seletor em pílula (ex.: 6M | 12M) com a opção ativa numa pílula clara
+    que desliza entre as opções."""
 
-    def __init__(self, parent, options, value, command=None, bg=None):
-        super().__init__(parent, bg=c("border"), padx=1, pady=1)
-        self.value, self.command, self.items = value, command, {}
-        for key, text in options:
-            lbl = tk.Label(self, text=text, font=font(11, "bold"), padx=18, pady=7, cursor="hand2")
-            lbl.pack(side="left")
-            lbl.bind("<Button-1>", lambda e, k=key: self.select(k))
-            self.items[key] = lbl
+    def __init__(self, parent, options, value, command=None, bg=None, size=11, pad=(14, 6)):
+        self._parent_bg = bg or bg_of(parent)
+        super().__init__(parent, bg=self._parent_bg, highlightthickness=0, bd=0,
+                         cursor="hand2", takefocus=1)
+        self.options = list(options)
+        self.value = value
+        self.command = command
+        self.items = {}
+        self._font = font(size, "semibold")
+        inset = self._inset = 4
+        x = inset
+        self._spans = {}
+        for key, text in self.options:
+            width = measure(self._font, text) + 2 * pad[0]
+            self._spans[key] = (x, x + width)
+            x += width
+        self._width = x + inset
+        self._h = linespace(self._font) + 2 * pad[1] + 2 * inset
+        self.configure(width=self._width, height=self._h)
+        round_rect(self, 0.5, 0.5, self._width - 0.5, self._h - 0.5, self._h / 2,
+                   c("surface_alt"), c("border"), tags="track")
+        for key, text in self.options:
+            x1, x2 = self._spans[key]
+            self.items[key] = self.create_text((x1 + x2) / 2, self._h / 2, text=text,
+                                               font=self._font, tags="label")
+        self.slider = motion.EdgeSlider(self, self._move)
+        if value in self._spans:
+            self.slider.jump(*self._edges(value))
         self._paint()
+        self.bind("<Button-1>", self._click)
+        self.bind("<Left>", lambda e: self._step(-1))
+        self.bind("<Right>", lambda e: self._step(1))
+
+    def _edges(self, key):
+        x1, x2 = self._spans[key]
+        return x1, self._width - x2
+
+    def _move(self, left, right):
+        self.delete("pill")
+        x1, x2 = left, self._width - right
+        fill = mix(c("surface_alt"), c("text"), 0.15)
+        round_rect(self, x1, self._inset, x2, self._h - self._inset,
+                   (self._h - 2 * self._inset) / 2, fill, fill, tags="pill")
+        self.tag_raise("label")
 
     def _paint(self):
-        for key, lbl in self.items.items():
-            on = key == self.value
-            lbl.configure(bg=c("primary") if on else c("surface"),
-                          fg=c("primary_text") if on else c("muted"))
+        for key, item in self.items.items():
+            self.itemconfigure(item, fill=c("text") if key == self.value else c("muted"))
+
+    def _click(self, e):
+        for key, (x1, x2) in self._spans.items():
+            if x1 <= e.x < x2:
+                self.select(key)
+                return
+
+    def _step(self, delta):
+        keys = [k for k, _ in self.options]
+        if self.value in keys:
+            self.select(keys[(keys.index(self.value) + delta) % len(keys)])
+
+    def set(self, key):
+        if key in self._spans:
+            self.value = key
+            self._paint()
+            self.slider.go(*self._edges(key))
 
     def select(self, key):
-        self.value = key
-        self._paint()
-        if self.command:
+        changed = key != self.value
+        self.set(key)
+        if self.command and changed:
             self.command(key)
 
     def get(self):
@@ -745,3 +893,4 @@ class ChoiceCombo(ttk.Combobox):
     def set_id(self, value):
         if value in self._ids:
             self.current(self._ids.index(value))
+

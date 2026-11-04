@@ -5,9 +5,9 @@ cria os lançamentos vencidos. Um índice único (regra + data) garante que
 nunca haja duplicidade, mesmo se a rotina rodar duas vezes.
 """
 
-import calendar
 from datetime import date, datetime, timedelta
 
+from backend.utils.i18n import t
 from backend.config import FREQUENCIES
 from database import fetch_all, fetch_one, get_connection
 from backend.utils.formatters import add_months
@@ -34,12 +34,12 @@ def next_occurrence(current, frequency, anchor_day):
         return add_months(current, 1, anchor_day=anchor_day)
     if frequency == "yearly":
         return add_months(current, 12, anchor_day=anchor_day)
-    raise ValueError("Frequência inválida.")
+    raise ValueError(t("error.frequency_invalid"))
 
 
 def _validate_frequency(frequency):
     if frequency not in FREQUENCIES:
-        raise ValueError("Frequência inválida.")
+        raise ValueError(t("error.frequency_invalid"))
     return frequency
 
 
@@ -48,14 +48,14 @@ def _check(conn, kind, category_id, account_id):
         "SELECT kind FROM categories WHERE id = ?", (category_id,)
     ).fetchone()
     if not category or category["kind"] != kind:
-        raise ValueError("Selecione uma categoria válida para esse tipo.")
+        raise ValueError(t("error.category_kind_invalid"))
     account = conn.execute(
         "SELECT archived FROM accounts WHERE id = ?", (account_id,)
     ).fetchone()
     if not account:
-        raise ValueError("Conta não encontrada.")
+        raise ValueError(t("error.account_not_found"))
     if account["archived"]:
-        raise ValueError("Essa conta está arquivada. Escolha outra conta.")
+        raise ValueError(t("error.account_archived"))
 
 
 def _validate_end(end_date, start_iso):
@@ -63,7 +63,7 @@ def _validate_end(end_date, start_iso):
         return None
     end = validate_date(end_date)
     if end < start_iso:
-        raise ValueError("A data final deve ser posterior à data de início.")
+        raise ValueError(t("error.end_before_start"))
     return end
 
 
@@ -100,7 +100,7 @@ def update_recurring(recurring_id, description, amount, kind, category_id,
         if not conn.execute(
             "SELECT 1 FROM recurring WHERE id = ?", (recurring_id,)
         ).fetchone():
-            raise ValueError("Recorrência não encontrada.")
+            raise ValueError(t("error.recurring_not_found"))
         _check(conn, kind, category_id, account_id)
         conn.execute(
             "UPDATE recurring SET description = ?, amount = ?, kind = ?, "
@@ -119,10 +119,7 @@ def set_active(recurring_id, active):
                 "ON a.id = r.account_id WHERE r.id = ?", (recurring_id,)
             ).fetchone()
             if row and row["archived"]:
-                raise ValueError(
-                    "A conta dessa recorrência está arquivada. Edite a "
-                    "recorrência e escolha outra conta."
-                )
+                raise ValueError(t("error.recurring_account_archived"))
         conn.execute(
             "UPDATE recurring SET active = ? WHERE id = ?",
             (1 if active else 0, recurring_id),

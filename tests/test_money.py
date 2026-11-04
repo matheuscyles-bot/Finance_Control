@@ -3,6 +3,7 @@ import unittest
 from tests.base import ROOT  # noqa: F401
 from backend.utils.money import format_money, parse_amount, split_installments
 from backend.utils.formatters import parse_date, add_months
+from backend.utils.i18n import set_locale
 from datetime import date
 
 
@@ -27,9 +28,13 @@ class MoneyTests(unittest.TestCase):
                 parse_amount(bad)
 
     def test_format(self):
+        set_locale("en", persist=False)
         self.assertEqual(format_money(123456, "£"), "£1,234.56")
+        set_locale("pt-BR", persist=False)
         self.assertEqual(format_money(123456, "R$"), "R$ 1.234,56")
+        set_locale("en", persist=False)
         self.assertEqual(format_money(-500, "£"), "-£5.00")
+        set_locale("pt-BR", persist=False)
 
     def test_installments_sum_exact(self):
         for total in (1, 100, 1000, 9999, 10001):

@@ -1,5 +1,6 @@
 """Validações centralizadas de entradas do usuário."""
 
+from backend.utils.i18n import t
 from datetime import datetime
 
 from backend.utils.formatters import parse_date, parse_month
@@ -30,21 +31,21 @@ def _clean_text(value, label, limit, required=True):
     if value is None:
         value = ""
     if not isinstance(value, str):
-        raise ValueError(f"{label} inválido(a).")
+        raise ValueError(t("validation.field_invalid", label=label))
     value = " ".join(value.split())
     if required and not value:
-        raise ValueError(f"Informe {label.lower()}.")
+        raise ValueError(t("validation.field_required", label=label))
     if len(value) > limit:
-        raise ValueError(f"{label} deve ter no máximo {limit} caracteres.")
+        raise ValueError(t("validation.field_too_long", label=label, limit=limit))
     return value
 
 
 def validate_description(value):
-    return _clean_text(value, "A descrição", MAX_DESCRIPTION)
+    return _clean_text(value, t("validation.label_description"), MAX_DESCRIPTION)
 
 
-def validate_name(value, label="O nome"):
-    return _clean_text(value, label, MAX_NAME)
+def validate_name(value, label=None):
+    return _clean_text(value, label or t("validation.label_name"), MAX_NAME)
 
 
 def validate_notes(value):
@@ -52,7 +53,7 @@ def validate_notes(value):
         return ""
     value = str(value).strip()
     if len(value) > MAX_NOTES:
-        raise ValueError(f"As observações devem ter no máximo {MAX_NOTES} caracteres.")
+        raise ValueError(t("validation.notes_too_long", limit=MAX_NOTES))
     return value
 
 
@@ -86,7 +87,7 @@ def validate_month(value):
 
 def validate_kind(kind):
     if kind not in ("income", "expense"):
-        raise ValueError("Tipo de movimentação inválido.")
+        raise ValueError(t("validation.kind_invalid"))
     return kind
 
 
@@ -94,7 +95,7 @@ def validate_date_range(start, end):
     start = validate_date(start)
     end = validate_date(end)
     if start > end:
-        raise ValueError("A data inicial não pode ser posterior à final.")
+        raise ValueError(t("validation.date_range_invalid"))
     return start, end
 
 

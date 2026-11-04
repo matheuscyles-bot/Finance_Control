@@ -21,7 +21,8 @@ a = Analysis(
     [os.path.join(ROOT, "backend", "main.py")],
     pathex=[ROOT],
     binaries=[],
-    datas=[],  # o app não precisa de arquivos externos: ícones são desenhados em código
+    datas=[(os.path.join(ROOT, "locales"), "locales"),
+           (os.path.join(ROOT, "assets", "fonts"), os.path.join("assets", "fonts"))],
     hiddenimports=hidden,
     hookspath=[],
     runtime_hooks=[],
